@@ -14,6 +14,10 @@ const UPSTREAM_KEY = process.env.UPSTREAM_API_KEY || '';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const PORT = parseInt(process.env.PORT) || 3000;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'velist/gpt-image-server';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'master';
+const KEY_BACKUP_PATH = 'data/keys-backup.json';
 
 // Load .env manually if no dotenv
 if (!process.env.UPSTREAM_API_BASE) {
@@ -101,6 +105,56 @@ function keyToJSON(row) {
   };
 }
 
+function allKeysJSON() {
+  return db.prepare('SELECT * FROM keys ORDER BY created_at DESC').all().map(keyToJSON);
+}
+
+function restoreKeysFromBackupFile() {
+  if (db.prepare('SELECT COUNT(*) as c FROM keys').get().c > 0) return;
+  const backupPath = path.join(__dirname, KEY_BACKUP_PATH);
+  if (!fs.existsSync(backupPath)) return;
+  const keys = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+  const stmt = db.prepare(`INSERT OR IGNORE INTO keys (id, key, name, max_images, used_images, expires_at, created_at, enabled, last_used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  const tx = db.transaction(items => {
+    for (const k of items) {
+      stmt.run(k.id || uuidv4(), k.key, k.name || '', k.maxImages ?? -1, k.usedImages || 0, k.expiresAt || null, k.createdAt || new Date().toISOString(), k.enabled === false ? 0 : 1, k.lastUsedAt || null);
+    }
+  });
+  tx(keys);
+  console.log(`Restored ${keys.length} keys from ${KEY_BACKUP_PATH}`);
+}
+
+async function updateGitHubKeyBackup() {
+  if (!GITHUB_TOKEN) return;
+  const content = JSON.stringify(allKeysJSON(), null, 2);
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
+  const headers = {
+    'Authorization': `Bearer ${GITHUB_TOKEN}`,
+    'Accept': 'application/vnd.github+json',
+    'User-Agent': 'gpt-image-server'
+  };
+  let sha;
+  try {
+    const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
+    if (current.ok) sha = (await current.json()).sha;
+  } catch {}
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: { ...headers, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(content).toString('base64'), sha })
+  });
+  if (!res.ok) console.error('GitHub key backup failed:', await res.text());
+}
+
+let backupTimer;
+function scheduleKeyBackup() {
+  if (!GITHUB_TOKEN) return;
+  clearTimeout(backupTimer);
+  backupTimer = setTimeout(() => updateGitHubKeyBackup().catch(err => console.error('GitHub key backup failed:', err)), 2000);
+}
+
+restoreKeysFromBackupFile();
+
 // --- Middleware ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -174,6 +228,7 @@ app.post('/api/generate', async (req, res) => {
     if (result.status === 200) {
       db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
         .run(new Date().toISOString(), v.key.id);
+      scheduleKeyBackup();
     }
 
     res.status(result.status);
@@ -240,6 +295,7 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
     if (result.status === 200) {
       db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
         .run(new Date().toISOString(), v.key.id);
+      scheduleKeyBackup();
     }
 
     res.status(result.status);
@@ -295,6 +351,7 @@ app.post('/api/admin/keys', (req, res) => {
   if (exists) return res.json(keyToJSON(exists));
   db.prepare(`INSERT INTO keys (id, key, name, max_images, used_images, expires_at, enabled) VALUES (?, ?, ?, ?, ?, ?, ?)`)
     .run(id, key, name || '', maxImages, usedImages, expiresAt, enabled ? 1 : 0);
+  scheduleKeyBackup();
   res.json(keyToJSON(db.prepare('SELECT * FROM keys WHERE id = ?').get(id)));
 });
 
@@ -309,6 +366,7 @@ app.post('/api/admin/keys/batch', (req, res) => {
     stmt.run(id, key, (name || '批量Key') + (count > 1 ? ` #${i + 1}` : ''), maxImages, expiresAt);
     keys.push(keyToJSON(db.prepare('SELECT * FROM keys WHERE id = ?').get(id)));
   }
+  scheduleKeyBackup();
   res.json({ data: keys, count: keys.length });
 });
 
@@ -322,6 +380,7 @@ app.patch('/api/admin/keys/:id', (req, res) => {
   if (expiresAt !== undefined) db.prepare('UPDATE keys SET expires_at = ? WHERE id = ?').run(expiresAt, req.params.id);
   if (enabled !== undefined) db.prepare('UPDATE keys SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, req.params.id);
   if (resetUsage) db.prepare('UPDATE keys SET used_images = 0 WHERE id = ?').run(req.params.id);
+  scheduleKeyBackup();
   res.json(keyToJSON(db.prepare('SELECT * FROM keys WHERE id = ?').get(req.params.id)));
 });
 
@@ -329,6 +388,7 @@ app.patch('/api/admin/keys/:id', (req, res) => {
 app.delete('/api/admin/keys/:id', (req, res) => {
   const r = db.prepare('DELETE FROM keys WHERE id = ?').run(req.params.id);
   if (!r.changes) return res.status(404).json({ error: 'Key 不存在' });
+  scheduleKeyBackup();
   res.json({ ok: true });
 });
 

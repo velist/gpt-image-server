@@ -1,0 +1,62 @@
+[
+  {
+    "id": "1c8380c0-6ae0-46d2-970a-063824c33e07",
+    "key": "sk-gi-6a40e073019435740963959773d8a10bcd14c7c41515bcee",
+    "name": "restored-key",
+    "maxImages": 3,
+    "usedImages": 0,
+    "remaining": 3,
+    "expiresAt": null,
+    "createdAt": "2026-04-24 23:17:37",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
+    "id": "25a37da4-913b-49db-93cc-e0fb6d0e2bfe",
+    "key": "sk-gi-977d0bd2d05e31d33231ecacbf041ae44546c2e077110660",
+    "name": "restored-key",
+    "maxImages": 3,
+    "usedImages": 2,
+    "remaining": 1,
+    "expiresAt": null,
+    "createdAt": "2026-04-24 23:17:36",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
+    "id": "1db29302-023d-4571-9c4c-281fc6e3872b",
+    "key": "sk-gi-9aace8a004e236ffa2e388c441a0a6394334fe6b88e48487",
+    "name": "restored-key",
+    "maxImages": 3,
+    "usedImages": 3,
+    "remaining": 0,
+    "expiresAt": null,
+    "createdAt": "2026-04-24 23:17:35",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
+    "id": "d48bbe41-45d6-4337-b8f4-00e555de67d9",
+    "key": "sk-gi-6fad4ecf0ca9528e2a669b92d10bc4269edbb45316df0347",
+    "name": "restored-key",
+    "maxImages": 9,
+    "usedImages": 6,
+    "remaining": 3,
+    "expiresAt": null,
+    "createdAt": "2026-04-24 23:17:34",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
+    "id": "fa54ff19-a34a-441d-9586-b43b18b6efe6",
+    "key": "sk-gi-8b70d8b444519d07106759e5a606a105911c0f12337f5a81",
+    "name": "restored-key",
+    "maxImages": 100,
+    "usedImages": 0,
+    "remaining": 100,
+    "expiresAt": null,
+    "createdAt": "2026-04-24 23:17:33",
+    "enabled": true,
+    "lastUsedAt": null
+  }
+]
