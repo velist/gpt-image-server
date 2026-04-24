@@ -107,7 +107,9 @@ app.use('/api', (req, res, next) => {
 // --- Upstream Proxy ---
 function proxyRequest(targetPath, method, headers, body) {
   return new Promise((resolve, reject) => {
-    const url = new URL(targetPath, UPSTREAM_BASE);
+    const base = UPSTREAM_BASE.endsWith('/') ? UPSTREAM_BASE : UPSTREAM_BASE + '/';
+    const relPath = targetPath.startsWith('/') ? targetPath.slice(1) : targetPath;
+    const url = new URL(relPath, base);
     const mod = url.protocol === 'https:' ? https : http;
     const opts = {
       hostname: url.hostname,
