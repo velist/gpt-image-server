@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPT-Image-2 管理后台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--panel:#12121a;--card:#1a1a28;--border:#2a2a3a;--text:#e0e0e8;--dim:#888899;--accent:#00d4ff;--accent2:#ff3366;--success:#00ff88;--warn:#ffaa00;--radius:8px}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+input,textarea,select,button{font-family:inherit;font-size:14px;color:var(--text);outline:none}
+input[type=text],input[type=password],input[type=number],input[type=datetime-local],textarea,select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;width:100%;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888899'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+button{cursor:pointer;border:none;border-radius:var(--radius);padding:10px 20px;font-weight:600;transition:all .2s}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--panel)}
+.header h1{font-size:20px;font-weight:700;color:var(--accent)}
+.header a{color:var(--dim);text-decoration:none;font-size:13px}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+
+/* Login */
+.login-box{max-width:360px;margin:100px auto;padding:32px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
+.login-box h2{text-align:center;margin-bottom:24px;color:var(--accent)}
+.login-box .field{margin-bottom:16px}
+.login-box label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
+.login-box button{width:100%;padding:12px;background:var(--accent);color:#000;font-weight:700;border-radius:var(--radius)}
+.login-box button:hover{opacity:.9}
+.login-box .error{color:var(--accent2);font-size:13px;text-align:center;margin-top:8px}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--accent)}
+.stat-card .label{font-size:12px;color:var(--dim);margin-top:4px}
+
+/* Toolbar */
+.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.btn-primary{background:var(--accent);color:#000}
+.btn-primary:hover{box-shadow:0 0 12px rgba(0,212,255,.3)}
+.btn-warn{background:var(--warn);color:#000}
+.btn-danger{background:var(--accent2);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;background:var(--border);color:var(--text)}
+.btn-sm:hover{background:var(--accent);color:#000}
+.btn-sm.danger{color:var(--accent2);border:1px solid var(--accent2);background:transparent}
+.btn-sm.danger:hover{background:var(--accent2);color:#fff}
+.btn-sm.success{color:var(--success);border:1px solid var(--success);background:transparent}
+
+/* Table */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{background:var(--panel);padding:12px;text-align:left;font-size:12px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+td{padding:10px 12px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(0,212,255,.02)}
+.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.active{background:rgba(0,255,136,.1);color:var(--success)}
+.badge.disabled{background:rgba(255,51,102,.1);color:var(--accent2)}
+.badge.expired{background:rgba(255,170,0,.1);color:var(--warn)}
+.key-text{font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer;user-select:all}
+.copy-hint{font-size:10px;color:var(--dim);margin-left:4px}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal-overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:480px}
+.modal h3{margin-bottom:16px;color:var(--accent)}
+.modal .field{margin-bottom:12px}
+.modal .field label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
+.modal .row{display:flex;gap:8px}
+.modal .row>*{flex:1}
+.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
+.modal .result-box{margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;max-height:200px;overflow:auto;font-family:monospace;font-size:12px}
+.modal .result-box .key-line{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.modal .result-box .key-line span{color:var(--accent)}
+
+/* Pagination */
+.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--dim)}
+.pagination button{padding:6px 12px;font-size:12px;background:var(--card);color:var(--text);border:1px solid var(--border)}
+.pagination button:disabled{opacity:.3;cursor:not-allowed}
+.pagination span{color:var(--text)}
+
+/* Responsive */
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .toolbar{flex-direction:column}
+  table{font-size:12px}
+  th,td{padding:8px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>GPT-Image-2 Admin</h1>
+  <div>
+    <a href="/">返回首页</a>
+    <button class="btn-sm" onclick="logout()" style="margin-left:12px" id="logoutBtn">退出登录</button>
+  </div>
+</div>
+
+<!-- Login -->
+<div class="container" id="loginPage">
+  <div class="login-box">
+    <h2>管理后台登录</h2>
+    <div class="field">
+      <label>管理员密码</label>
+      <input type="password" id="adminPwd" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button onclick="doLogin()">登录</button>
+    <div class="error" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="container" id="dashPage" style="display:none">
+  <div class="stats" id="statsGrid"></div>
+
+  <div class="toolbar">
+    <button class="btn-primary" onclick="showCreateModal()">+ 创建 Key</button>
+    <button class="btn-warn" onclick="showBatchModal()">批量创建</button>
+    <input type="text" id="searchInput" placeholder="搜索 Key 名称..." style="width:220px" oninput="loadKeys()">
+    <button class="btn-sm" onclick="loadKeys()">刷新</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>名称</th>
+          <th>Key</th>
+          <th>状态</th>
+          <th>额度</th>
+          <th>有效期</th>
+          <th>最后使用</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="keysBody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal-overlay" id="createModal">
+  <div class="modal">
+    <h3 id="modalTitle">创建 API Key</h3>
+    <div class="field">
+      <label>名称/备注</label>
+      <input type="text" id="mName" placeholder="例如：张三的Key">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>最大生成张数</label>
+        <input type="number" id="mMax" value="-1" min="-1" placeholder="-1=无限">
+      </div>
+      <div class="field">
+        <label>过期时间</label>
+        <input type="datetime-local" id="mExpires">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('createModal')">取消</button>
+      <button class="btn-primary" id="mSubmit" onclick="doCreate()">创建</button>
+    </div>
+    <div class="result-box" id="mResult" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Batch Modal -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal">
+    <h3>批量创建 Key</h3>
+    <div class="field">
+      <label>名称前缀</label>
+      <input type="text" id="bName" value="批量Key">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>数量</label>
+        <input type="number" id="bCount" value="5" min="1" max="100">
+      </div>
+      <div class="field">
+        <label>每张额度</label>
+        <input type="number" id="bMax" value="-1" min="-1">
+      </div>
+      <div class="field">
+        <label>过期时间</label>
+        <input type="datetime-local" id="bExpires">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sm" onclick="closeModal('batchModal')">取消</button>
+      <button class="btn-warn" onclick="doBatch()">批量创建</button>
+    </div>
+    <div class="result-box" id="bResult" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('gpt-admin-token');
+let page = 1;
+
+// Auto-check token
+if (token) showDashboard();
+
+function api(path, opts = {}) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch('/api/admin' + path, { ...opts, headers: { ...headers, ...opts.headers } })
+    .then(async r => {
+      const data = await r.json();
+      if (r.status === 401) { logout(); throw new Error('未授权'); }
+      return data;
+    });
+}
+
+async function doLogin() {
+  const pwd = document.getElementById('adminPwd').value;
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  try {
+    const r = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    const data = await r.json();
+    if (!r.ok) { err.textContent = data.error || '登录失败'; return; }
+    token = data.token;
+    localStorage.setItem('gpt-admin-token', token);
+    showDashboard();
+  } catch (e) { err.textContent = e.message; }
+}
+
+function logout() {
+  token = null;
+  localStorage.removeItem('gpt-admin-token');
+  document.getElementById('loginPage').style.display = '';
+  document.getElementById('dashPage').style.display = 'none';
+}
+
+function showDashboard() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('dashPage').style.display = '';
+  loadStats();
+  loadKeys();
+}
+
+async function loadStats() {
+  try {
+    const s = await api('/stats');
+    document.getElementById('statsGrid').innerHTML = [
+      { v: s.totalKeys, l: '总 Key 数' },
+      { v: s.activeKeys, l: '活跃 Key' },
+      { v: s.expiredKeys, l: '已过期' },
+      { v: s.totalImages, l: '总生成图片' },
+      { v: s.todayImages, l: '今日生成' }
+    ].map(c => `<div class="stat-card"><div class="value">${c.v}</div><div class="label">${c.l}</div></div>`).join('');
+  } catch {}
+}
+
+async function loadKeys() {
+  const search = document.getElementById('searchInput').value.trim();
+  try {
+    const r = await api(`/keys?page=${page}&limit=20&search=${encodeURIComponent(search)}`);
+    const tbody = document.getElementById('keysBody');
+    tbody.innerHTML = r.data.length ? r.data.map(k => {
+      const status = !k.enabled ? '<span class="badge disabled">禁用</span>'
+        : (k.expiresAt && new Date(k.expiresAt) < new Date()) ? '<span class="badge expired">已过期</span>'
+        : '<span class="badge active">正常</span>';
+      const quota = k.maxImages < 0 ? `${k.usedImages} / ∞`
+        : `${k.usedImages} / ${k.maxImages} <span style="color:${k.usedImages >= k.maxImages ? 'var(--accent2)' : 'var(--success)'}">(${k.maxImages - k.usedImages}剩余)</span>`;
+      const exp = k.expiresAt ? new Date(k.expiresAt).toLocaleString('zh-CN') : '永不过期';
+      const lastUsed = k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString('zh-CN') : '-';
+      return `<tr>
+        <td>${k.name || '-'}</td>
+        <td><span class="key-text" onclick="copyKey(this)" title="点击复制">${k.key}</span><span class="copy-hint">点击复制</span></td>
+        <td>${status}</td>
+        <td>${quota}</td>
+        <td style="font-size:12px">${exp}</td>
+        <td style="font-size:12px">${lastUsed}</td>
+        <td>
+          <button class="btn-sm success" onclick="toggleKey('${k.id}',${!k.enabled})">${k.enabled ? '禁用' : '启用'}</button>
+          <button class="btn-sm" onclick="resetUsage('${k.id}')">重置额度</button>
+          <button class="btn-sm danger" onclick="deleteKey('${k.id}','${k.name}')">删除</button>
+        </td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:32px">暂无 Key</td></tr>';
+
+    // Pagination
+    const total = r.total;
+    const totalPages = Math.ceil(total / 20);
+    document.getElementById('pagination').innerHTML = totalPages > 1 ? `
+      <button ${page <= 1 ? 'disabled' : ''} onclick="page--;loadKeys()">上一页</button>
+      <span>第 ${page} / ${totalPages} 页（共 ${total} 条）</span>
+      <button ${page >= totalPages ? 'disabled' : ''} onclick="page++;loadKeys()">下一页</button>
+    ` : '';
+  } catch {}
+}
+
+function copyKey(el) {
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const hint = el.nextElementSibling;
+    hint.textContent = '已复制!';
+    hint.style.color = 'var(--success)';
+    setTimeout(() => { hint.textContent = '点击复制'; hint.style.color = ''; }, 1500);
+  });
+}
+
+function showCreateModal() {
+  document.getElementById('mName').value = '';
+  document.getElementById('mMax').value = '-1';
+  document.getElementById('mExpires').value = '';
+  document.getElementById('mResult').style.display = 'none';
+  document.getElementById('modalTitle').textContent = '创建 API Key';
+  document.getElementById('createModal').classList.add('show');
+}
+
+function showBatchModal() {
+  document.getElementById('bCount').value = '5';
+  document.getElementById('bMax').value = '-1';
+  document.getElementById('bExpires').value = '';
+  document.getElementById('bResult').style.display = 'none';
+  document.getElementById('batchModal').classList.add('show');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('show') }
+
+async function doCreate() {
+  const body = {
+    name: document.getElementById('mName').value.trim(),
+    maxImages: parseInt(document.getElementById('mMax').value),
+    expiresAt: document.getElementById('mExpires').value ? new Date(document.getElementById('mExpires').value).toISOString() : null
+  };
+  try {
+    const k = await api('/keys', { method: 'POST', body: JSON.stringify(body) });
+    const box = document.getElementById('mResult');
+    box.style.display = '';
+    box.innerHTML = `<div class="key-line"><span>${k.key}</span><button class="btn-sm" onclick="navigator.clipboard.writeText('${k.key}')">复制</button></div>`;
+    loadKeys(); loadStats();
+  } catch (e) { alert('创建失败: ' + e.message); }
+}
+
+async function doBatch() {
+  const body = {
+    name: document.getElementById('bName').value.trim(),
+    count: parseInt(document.getElementById('bCount').value),
+    maxImages: parseInt(document.getElementById('bMax').value),
+    expiresAt: document.getElementById('bExpires').value ? new Date(document.getElementById('bExpires').value).toISOString() : null
+  };
+  try {
+    const r = await api('/keys/batch', { method: 'POST', body: JSON.stringify(body) });
+    const box = document.getElementById('bResult');
+    box.style.display = '';
+    box.innerHTML = r.data.map(k => `<div class="key-line"><span>${k.key}</span></div>`).join('')
+      + `<div style="margin-top:8px"><button class="btn-sm" onclick="navigator.clipboard.writeText([${r.data.map(k=>`'${k.key}'`).join(',')}].join('\\n'))">复制全部</button></div>`;
+    loadKeys(); loadStats();
+  } catch (e) { alert('创建失败: ' + e.message); }
+}
+
+async function toggleKey(id, enable) {
+  try { await api('/keys/' + id, { method: 'PATCH', body: JSON.stringify({ enabled: enable }) }); loadKeys(); } catch {}
+}
+async function resetUsage(id) {
+  try { await api('/keys/' + id, { method: 'PATCH', body: JSON.stringify({ resetUsage: true }) }); loadKeys(); loadStats(); } catch {}
+}
+async function deleteKey(id, name) {
+  if (!confirm('确认删除 Key "' + (name || id) + '"？')) return;
+  try { await api('/keys/' + id, { method: 'DELETE' }); loadKeys(); loadStats(); } catch {}
+}
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show') });
+});
+</script>
+</body>
+</html>
