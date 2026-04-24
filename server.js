@@ -273,9 +273,12 @@ app.get('/api/admin/keys', (req, res) => {
 
 // --- Admin API: Create Key ---
 app.post('/api/admin/keys', (req, res) => {
-  const { name, maxImages = -1, expiresAt = null, enabled = true } = req.body;
+  const { name, maxImages = -1, expiresAt = null, enabled = true, key: providedKey } = req.body;
   const id = uuidv4();
-  const key = generateKey();
+  const key = providedKey || generateKey();
+  if (!/^sk-gi-[a-f0-9]{48}$/.test(key)) return res.status(400).json({ error: 'Key 格式无效' });
+  const exists = db.prepare('SELECT * FROM keys WHERE key = ?').get(key);
+  if (exists) return res.json(keyToJSON(exists));
   db.prepare(`INSERT INTO keys (id, key, name, max_images, expires_at, enabled) VALUES (?, ?, ?, ?, ?, ?)`)
     .run(id, key, name || '', maxImages, expiresAt, enabled ? 1 : 0);
   res.json(keyToJSON(db.prepare('SELECT * FROM keys WHERE id = ?').get(id)));
