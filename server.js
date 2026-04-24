@@ -160,8 +160,8 @@ app.post('/api/generate', async (req, res) => {
 
     const contentType = result.headers['content-type'] || '';
     if (result.status === 200) {
-      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime('now') WHERE id = ?')
-        .run(v.key.id);
+      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
+        .run(new Date().toISOString(), v.key.id);
     }
 
     res.status(result.status);
@@ -224,8 +224,8 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
     }, bodyBuf);
 
     if (result.status === 200) {
-      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime('now') WHERE id = ?')
-        .run(v.key.id);
+      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
+        .run(new Date().toISOString(), v.key.id);
     }
 
     res.status(result.status);
@@ -319,9 +319,9 @@ app.delete('/api/admin/keys/:id', (req, res) => {
 app.get('/api/admin/stats', (req, res) => {
   const total = db.prepare('SELECT COUNT(*) as c FROM keys').get().c;
   const active = db.prepare('SELECT COUNT(*) as c FROM keys WHERE enabled = 1').get().c;
-  const expired = db.prepare("SELECT COUNT(*) as c FROM keys WHERE expires_at IS NOT NULL AND expires_at < datetime('now')").get().c;
+  const expired = db.prepare("SELECT COUNT(*) as c FROM keys WHERE expires_at IS NOT NULL AND expires_at < ?").get(new Date().toISOString()).c;
   const totalUsed = db.prepare('SELECT COALESCE(SUM(used_images),0) as s FROM keys').get().s;
-  const todayUsed = db.prepare("SELECT COALESCE(SUM(used_images),0) as s FROM keys WHERE date(last_used_at) = date('now')").get().s;
+  const todayUsed = db.prepare("SELECT COALESCE(SUM(used_images),0) as s FROM keys WHERE date(last_used_at) = date(?)").get(new Date().toISOString()).s;
   res.json({ totalKeys: total, activeKeys: active, expiredKeys: expired, totalImages: totalUsed, todayImages: todayUsed });
 });
 
