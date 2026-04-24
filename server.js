@@ -325,8 +325,17 @@ app.get('/api/admin/stats', (req, res) => {
   res.json({ totalKeys: total, activeKeys: active, expiredKeys: expired, totalImages: totalUsed, todayImages: todayUsed });
 });
 
+// --- User API: Key info ---
+app.get('/api/key-info', (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
+  const v = validateApiKey(apiKey);
+  if (!v.ok) return res.status(403).json({ error: v.error });
+  res.json(keyToJSON(v.key));
+});
+
 // --- Serve admin page ---
-app.get('/admin', (req, res) => {
+app.get('/imgadmin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 

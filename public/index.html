@@ -101,8 +101,7 @@ button{cursor:pointer;border:none;border-radius:var(--radius);padding:10px 20px;
 <div class="header">
   <h1>GPT-Image-2 Studio</h1>
   <div class="header-right">
-    <span id="usageInfo"></span>
-    <a href="/admin">管理后台</a>
+    <span id="quotaInfo" style="display:none;color:var(--success);font-weight:600">剩余额度: <span id="quotaCount">-</span> 张</span>
   </div>
 </div>
 
@@ -256,8 +255,22 @@ rz.addEventListener('drop',e=>{e.preventDefault();rz.classList.remove('dragover'
 
 // Load saved key
 const savedKey=localStorage.getItem('gpt-image-key');
-if(savedKey)document.getElementById('apiKey').value=savedKey;
-document.getElementById('apiKey').addEventListener('change',function(){localStorage.setItem('gpt-image-key',this.value)});
+if(savedKey){document.getElementById('apiKey').value=savedKey;fetchQuota(savedKey)}
+document.getElementById('apiKey').addEventListener('change',function(){localStorage.setItem('gpt-image-key',this.value);fetchQuota(this.value.trim())});
+document.getElementById('apiKey').addEventListener('input',function(){clearTimeout(this._t);const v=this.value.trim();this._t=setTimeout(()=>{if(v.startsWith('sk-gi-'))fetchQuota(v)},600)});
+
+async function fetchQuota(key){
+  if(!key||!key.startsWith('sk-gi-'))return;
+  try{
+    const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});
+    if(!r.ok){document.getElementById('quotaInfo').style.display='none';return}
+    const d=await r.json();
+    const q=document.getElementById('quotaInfo'),c=document.getElementById('quotaCount');
+    c.textContent=d.remaining===-1?'∞':d.remaining;
+    q.style.display='';
+    q.style.color=d.remaining===-1?'var(--accent)':d.remaining>5?'var(--success)':d.remaining>0?'var(--warn)':'var(--accent2)';
+  }catch(e){}
+}
 
 let _t0=0;
 async function generate(){
@@ -303,6 +316,7 @@ async function generate(){
     const elapsed=((performance.now()-_t0)/1000).toFixed(1);
     showStatus('生成成功！共 '+json.data.length+' 张，耗时 '+elapsed+'s','success');
     displayResults(json.data,document.getElementById('format').value);
+    fetchQuota(document.getElementById('apiKey').value.trim());
   }catch(e){
     showStatus('请求失败：'+e.message,'error');
   }
