@@ -186,9 +186,9 @@ button{cursor:pointer;border:none;border-radius:var(--radius);padding:10px 20px;
           <label>质量</label>
           <select id="quality">
             <option value="auto">auto</option>
-            <option value="low">low</option>
+            <option value="low" selected>low（推荐，速度快）</option>
             <option value="medium">medium</option>
-            <option value="high" selected>high</option>
+            <option value="high">high（较慢，可能超时）</option>
           </select>
         </div>
         <div class="field">
@@ -318,7 +318,8 @@ async function generate(){
     displayResults(json.data,document.getElementById('format').value);
     fetchQuota(document.getElementById('apiKey').value.trim());
   }catch(e){
-    showStatus('请求失败：'+e.message,'error');
+    const msg=e.message==='Failed to fetch'?'请求中断，可能是生成耗时过长。请先用 low 质量或更小尺寸重试。':e.message;
+    showStatus('请求失败：'+msg,'error');
   }
   setLoading(false);
 }
