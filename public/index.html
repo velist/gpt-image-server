@@ -290,6 +290,20 @@ async function fetchQuota(key){
 }
 
 let _t0=0;
+async function waitForTask(taskId){
+  if(!taskId)throw new Error('任务提交失败');
+  for(let i=0;i<180;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const r=await fetch('/api/tasks/'+encodeURIComponent(taskId));
+    const t=await r.json();
+    if(!r.ok)throw new Error(t.error||('HTTP '+r.status));
+    if(t.status==='done')return t.result;
+    if(t.status==='error')throw new Error(t.error||'生成失败');
+    const elapsed=((performance.now()-_t0)/1000).toFixed(0);
+    showStatus('正在生成... '+elapsed+'s','info');
+  }
+  throw new Error('任务超时，请稍后重试');
+}
 async function generate(){
   const key=document.getElementById('apiKey').value.trim();
   if(!key){showStatus('请输入 API Key','error');return}
@@ -316,6 +330,16 @@ async function generate(){
         headers:{'Content-Type':'application/json','X-API-Key':key},
         body:JSON.stringify(body)
       });
+      const startJson=await resp.json();
+      if(!resp.ok){showStatus(startJson.error||('HTTP '+resp.status),'error');setLoading(false);return}
+      showStatus('任务已提交，正在生成...','info');
+      const json=await waitForTask(startJson.taskId);
+      const elapsed=((performance.now()-_t0)/1000).toFixed(1);
+      showStatus('生成成功！共 '+json.data.length+' 张，耗时 '+elapsed+'s','success');
+      displayResults(json.data,document.getElementById('format').value);
+      fetchQuota(document.getElementById('apiKey').value.trim());
+      setLoading(false);
+      return;
     }else{
       const fd=new FormData();
       fd.append('prompt',prompt);

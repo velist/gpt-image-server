@@ -169,6 +169,15 @@ app.use('/api', (req, res, next) => {
 });
 
 // --- Upstream Proxy ---
+const tasks = new Map();
+
+function createTask() {
+  const id = crypto.randomBytes(16).toString('hex');
+  tasks.set(id, { status: 'queued', createdAt: Date.now() });
+  setTimeout(() => tasks.delete(id), 30 * 60 * 1000);
+  return id;
+}
+
 function proxyRequest(targetPath, method, headers, body) {
   return new Promise((resolve, reject) => {
     const base = UPSTREAM_BASE.endsWith('/') ? UPSTREAM_BASE : UPSTREAM_BASE + '/';
@@ -200,6 +209,33 @@ function proxyRequest(targetPath, method, headers, body) {
 }
 
 // --- User API: Generate ---
+async function runGenerateTask(taskId, keyId, body) {
+  const task = tasks.get(taskId);
+  if (!task) return;
+  task.status = 'running';
+  try {
+    const result = await proxyRequest('/images/generations', 'POST', {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
+    }, JSON.stringify(body));
+
+    if (result.status === 200) {
+      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
+        .run(new Date().toISOString(), keyId);
+      scheduleKeyBackup();
+      task.status = 'done';
+      task.result = JSON.parse(result.body.toString('utf8'));
+    } else {
+      task.status = 'error';
+      try { task.error = JSON.parse(result.body.toString('utf8')).error || result.body.toString('utf8'); }
+      catch { task.error = result.body.toString('utf8') || ('HTTP ' + result.status); }
+    }
+  } catch (e) {
+    task.status = 'error';
+    task.error = '上游请求失败: ' + e.message;
+  }
+}
+
 app.post('/api/generate', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
@@ -218,28 +254,15 @@ app.post('/api/generate', async (req, res) => {
   if (!body.model) body.model = 'gpt-image-2';
   if (!body.response_format) body.response_format = 'b64_json';
 
-  try {
-    const result = await proxyRequest('/images/generations', 'POST', {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
-    }, JSON.stringify(body));
+  const taskId = createTask();
+  runGenerateTask(taskId, v.key.id, body);
+  res.status(202).json({ taskId });
+});
 
-    const contentType = result.headers['content-type'] || '';
-    if (result.status === 200) {
-      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
-        .run(new Date().toISOString(), v.key.id);
-      scheduleKeyBackup();
-    }
-
-    res.status(result.status);
-    for (const [k, v2] of Object.entries(result.headers)) {
-      if (!['transfer-encoding', 'content-length', 'connection'].includes(k.toLowerCase()))
-        res.setHeader(k, v2);
-    }
-    res.send(result.body);
-  } catch (e) {
-    res.status(502).json({ error: '上游请求失败: ' + e.message });
-  }
+app.get('/api/tasks/:id', (req, res) => {
+  const task = tasks.get(req.params.id);
+  if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
+  res.json(task);
 });
 
 // --- User API: Edit ---
