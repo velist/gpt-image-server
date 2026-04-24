@@ -160,7 +160,7 @@ app.post('/api/generate', async (req, res) => {
 
     const contentType = result.headers['content-type'] || '';
     if (result.status === 200) {
-      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime("now") WHERE id = ?')
+      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime('now') WHERE id = ?')
         .run(v.key.id);
     }
 
@@ -224,7 +224,7 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
     }, bodyBuf);
 
     if (result.status === 200) {
-      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime("now") WHERE id = ?')
+      db.prepare('UPDATE keys SET used_images = used_images + 1, last_used_at = datetime('now') WHERE id = ?')
         .run(v.key.id);
     }
 
