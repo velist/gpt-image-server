@@ -173,14 +173,23 @@ button{cursor:pointer;border:none;border-radius:var(--radius);padding:10px 20px;
       <div class="section-body hidden">
         <div class="field">
           <label>尺寸</label>
-          <select id="size">
+          <select id="size" onchange="onSizeChange()">
             <option value="1024x1024">1024x1024（正方形）</option>
             <option value="1024x1536">1024x1536（竖版）</option>
             <option value="1536x1024">1536x1024（横版）</option>
             <option value="2048x2048">2048x2048（2K）</option>
             <option value="3840x2160">3840x2160（4K 横）</option>
             <option value="2160x3840">2160x3840（4K 竖）</option>
+            <option value="custom">自定义尺寸</option>
           </select>
+        </div>
+        <div class="field" id="customSizeField" style="display:none">
+          <label>自定义宽高（像素，上限 4000）</label>
+          <div class="row">
+            <input type="number" id="customWidth" min="1" max="4000" value="1024" placeholder="宽度">
+            <input type="number" id="customHeight" min="1" max="4000" value="1024" placeholder="高度">
+          </div>
+          <div class="hint">宽高需为 1-4000 的整数</div>
         </div>
         <div class="field">
           <label>质量</label>
@@ -242,6 +251,14 @@ function toggleSection(h){h.classList.toggle('collapsed');h.nextElementSibling.c
 function toggleKeyVis(){const i=document.getElementById('apiKey');const b=i.nextElementSibling;i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'显示':'隐藏'}
 function switchMode(m){mode=m;document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.mode===m));document.getElementById('editSection').style.display=m==='edit'?'':'none'}
 function onFormatChange(){document.getElementById('compressField').style.display=document.getElementById('format').value==='png'?'none':''}
+function onSizeChange(){document.getElementById('customSizeField').style.display=document.getElementById('size').value==='custom'?'':'none'}
+function getSize(){
+  const s=document.getElementById('size').value;
+  if(s!=='custom')return s;
+  const w=parseInt(document.getElementById('customWidth').value,10),h=parseInt(document.getElementById('customHeight').value,10);
+  if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w>4000||h>4000)throw new Error('自定义宽高必须是 1-4000 的整数');
+  return w+'x'+h;
+}
 function showStatus(m,t){const e=document.getElementById('smsg');e.textContent=m;e.className='status-msg '+(t||'')}
 function setLoading(on){const b=document.getElementById('btnGen'),p=document.getElementById('pbar');b.disabled=on;b.classList.toggle('loading',on);p.classList.toggle('active',on);p.classList.toggle('indeterminate',on);if(!on)p.querySelector('.fill').style.width='0'}
 
@@ -285,8 +302,9 @@ async function generate(){
 
   try{
     let resp;
+    const size=getSize();
     if(mode==='generate'){
-      const body={prompt,model:'gpt-image-2',size:document.getElementById('size').value,quality:document.getElementById('quality').value,response_format:'b64_json'};
+      const body={prompt,model:'gpt-image-2',size,quality:document.getElementById('quality').value,response_format:'b64_json'};
       const fmt=document.getElementById('format').value;
       if(fmt)body.output_format=fmt;
       const bg=document.getElementById('background').value;if(bg!=='auto')body.background=bg;
@@ -303,7 +321,7 @@ async function generate(){
       fd.append('prompt',prompt);
       fd.append('image',refFile);
       fd.append('model','gpt-image-2');
-      fd.append('size',document.getElementById('size').value);
+      fd.append('size',size);
       fd.append('quality',document.getElementById('quality').value);
       fd.append('response_format','b64_json');
       resp=await fetch('/api/edit',{method:'POST',headers:{'X-API-Key':key},body:fd});

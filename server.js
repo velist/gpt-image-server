@@ -65,6 +65,16 @@ function authAdmin(req) {
   catch { return null; }
 }
 
+function validateSize(size) {
+  if (size === undefined || size === null) return null;
+  const match = String(size).match(/^(\d+)x(\d+)$/);
+  if (!match) return '尺寸格式应为 宽x高，例如 1024x1024';
+  const width = parseInt(match[1], 10);
+  const height = parseInt(match[2], 10);
+  if (width < 1 || height < 1 || width > 4000 || height > 4000) return '宽高必须在 1-4000 像素之间';
+  return null;
+}
+
 function validateApiKey(keyStr) {
   const row = db.prepare('SELECT * FROM keys WHERE key = ?').get(keyStr);
   if (!row) return { ok: false, error: '无效的 API Key' };
@@ -145,6 +155,8 @@ app.post('/api/generate', async (req, res) => {
 
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: '缺少 prompt 参数' });
+  const sizeError = validateSize(req.body.size);
+  if (sizeError) return res.status(400).json({ error: sizeError });
 
   const body = { ...req.body };
   delete body.prompt;
@@ -186,6 +198,8 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '缺少参考图片' });
   const prompt = req.body.prompt;
   if (!prompt) return res.status(400).json({ error: '缺少 prompt 参数' });
+  const sizeError = validateSize(req.body.size);
+  if (sizeError) return res.status(400).json({ error: sizeError });
 
   // Build multipart
   const boundary = '----FormBoundary' + crypto.randomBytes(16).toString('hex');
