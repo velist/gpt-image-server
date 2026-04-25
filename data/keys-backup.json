@@ -1,5 +1,17 @@
 [
   {
+    "id": "627abcfc-ab46-4cd3-a402-c814bbc6118e",
+    "key": "sk-gi-9d10f04c41626e6c856a0e69766e784e555df0f0eb6ffb50",
+    "name": "github-auto-backup-test",
+    "maxImages": 1,
+    "usedImages": 0,
+    "remaining": 1,
+    "expiresAt": null,
+    "createdAt": "2026-04-25 00:09:06",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "7f9fb8df-b028-4234-a146-049fccf55a79",
     "key": "sk-gi-3e20d446ed7a64101570fbbb606db3eacf8705d030da008b",
     "name": "periodic-backup-test",
