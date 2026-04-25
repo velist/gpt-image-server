@@ -64,11 +64,11 @@
     "key": "sk-gi-8b70d8b444519d07106759e5a606a105911c0f12337f5a81",
     "name": "restored-key",
     "maxImages": 100,
-    "usedImages": 0,
-    "remaining": 100,
+    "usedImages": 1,
+    "remaining": 99,
     "expiresAt": null,
     "createdAt": "2026-04-24 23:17:33",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-04-25T00:01:00.001Z"
   }
 ]
