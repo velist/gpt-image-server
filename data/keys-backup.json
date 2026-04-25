@@ -76,8 +76,8 @@
     "key": "sk-gi-6fad4ecf0ca9528e2a669b92d10bc4269edbb45316df0347",
     "name": "restored-key",
     "maxImages": 9,
-    "usedImages": 0,
-    "remaining": 9,
+    "usedImages": 6,
+    "remaining": 3,
     "expiresAt": null,
     "createdAt": "2026-04-24 23:17:34",
     "enabled": true,
@@ -88,11 +88,11 @@
     "key": "sk-gi-8b70d8b444519d07106759e5a606a105911c0f12337f5a81",
     "name": "restored-key",
     "maxImages": 100,
-    "usedImages": 3,
-    "remaining": 97,
+    "usedImages": 2,
+    "remaining": 98,
     "expiresAt": null,
     "createdAt": "2026-04-24 23:17:33",
     "enabled": true,
-    "lastUsedAt": "2026-04-25T00:21:30.995Z"
+    "lastUsedAt": "2026-04-25T00:15:42.300Z"
   }
 ]
