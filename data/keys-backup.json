@@ -1,5 +1,17 @@
 [
   {
+    "id": "7f9fb8df-b028-4234-a146-049fccf55a79",
+    "key": "sk-gi-3e20d446ed7a64101570fbbb606db3eacf8705d030da008b",
+    "name": "periodic-backup-test",
+    "maxImages": 1,
+    "usedImages": 0,
+    "remaining": 1,
+    "expiresAt": null,
+    "createdAt": "2026-04-25 00:05:29",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "5d484542-8674-4970-8d2f-ab33dd4917b8",
     "key": "sk-gi-e7a5416311d4a0c75e88d6b874f1f5c1ebd07fdd62e91f6a",
     "name": "backup-test",
