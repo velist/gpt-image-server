@@ -373,7 +373,7 @@ async function runGenerateTask(taskId, keyId, body) {
 
     if (result.status === 200) {
       finishGenerateTaskSuccess(taskId, keyId, result.body.toString('utf8'));
-      persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
+      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
     } else {
       let errorMessage = '';
       try {
@@ -494,7 +494,7 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
     if (result.status === 200) {
       db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
         .run(new Date().toISOString(), v.key.id);
-      persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
+      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
     }
 
     res.status(result.status);
