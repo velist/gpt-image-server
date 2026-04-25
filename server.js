@@ -223,6 +223,7 @@ async function runGenerateTask(taskId, keyId, body) {
   const task = tasks.get(taskId);
   if (!task) return;
   task.status = 'running';
+  let quotaIncremented = false;
   try {
     const result = await proxyRequest('/images/generations', 'POST', {
       'Content-Type': 'application/json',
@@ -232,6 +233,7 @@ async function runGenerateTask(taskId, keyId, body) {
     if (result.status === 200) {
       db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
         .run(new Date().toISOString(), keyId);
+      quotaIncremented = true;
       scheduleKeyBackup();
       task.status = 'done';
       task.result = JSON.parse(result.body.toString('utf8'));
@@ -248,6 +250,9 @@ async function runGenerateTask(taskId, keyId, body) {
     task.status = 'error';
     task.error = '上游请求失败: ' + e.message;
   }
+
+  // If task failed and quota was not incremented, no refund needed
+  // Quota is only incremented on success (status 200)
 }
 
 app.post('/api/generate', async (req, res) => {

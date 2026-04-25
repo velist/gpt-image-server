@@ -375,8 +375,10 @@ async function generate(){
     }else{
       try{msg=JSON.stringify(e)}catch{msg=String(e)}
     }
-    showStatus('请求失败：'+msg,'error');
+    const fullMsg='请求失败：'+msg;
+    showStatus(fullMsg,'error');
     console.error('Generation error:',e);
+    console.error('Full error details:',{message:msg,error:e,stack:e.stack});
   }
   setLoading(false);
 }
