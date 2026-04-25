@@ -237,8 +237,12 @@ async function runGenerateTask(taskId, keyId, body) {
       task.result = JSON.parse(result.body.toString('utf8'));
     } else {
       task.status = 'error';
-      try { task.error = JSON.parse(result.body.toString('utf8')).error || result.body.toString('utf8'); }
-      catch { task.error = result.body.toString('utf8') || ('HTTP ' + result.status); }
+      try {
+        const errBody = JSON.parse(result.body.toString('utf8'));
+        task.error = typeof errBody.error === 'string' ? errBody.error : JSON.stringify(errBody.error || errBody);
+      } catch {
+        task.error = result.body.toString('utf8') || ('HTTP ' + result.status);
+      }
     }
   } catch (e) {
     task.status = 'error';
