@@ -648,7 +648,7 @@ async function waitForTask(task){
       if(!rr.ok)throw new Error(result.error||('HTTP '+rr.status));
       return result;
     }
-    if(t.status==='error')throw new Error(t.error||'生成失败');
+    if(t.status==='error'||t.status==='expired')throw new Error(t.error||'生成失败');
     task.status='running';
     task.updatedAt=Date.now();
     setActiveTask(task);

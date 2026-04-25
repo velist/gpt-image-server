@@ -55,6 +55,26 @@ db.exec(`
     last_used_at TEXT
   );
   CREATE INDEX IF NOT EXISTS idx_keys_key ON keys(key);
+
+  CREATE TABLE IF NOT EXISTS generate_tasks (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    key_id TEXT NOT NULL,
+    request_json TEXT NOT NULL,
+    result_json TEXT,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    started_at TEXT,
+    completed_at TEXT,
+    expires_at TEXT NOT NULL,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
+    last_error_at TEXT,
+    FOREIGN KEY (key_id) REFERENCES keys(id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_generate_tasks_status ON generate_tasks(status);
+  CREATE INDEX IF NOT EXISTS idx_generate_tasks_expires_at ON generate_tasks(expires_at);
+  CREATE INDEX IF NOT EXISTS idx_generate_tasks_created_at ON generate_tasks(created_at);
 `);
 
 // --- Helpers ---
@@ -108,6 +128,77 @@ function keyToJSON(row) {
 function allKeysJSON() {
   return db.prepare('SELECT * FROM keys ORDER BY created_at DESC').all().map(keyToJSON);
 }
+
+const TASK_TTL_MS = 60 * 60 * 1000;
+const TERMINAL_TASK_RETENTION_MS = 24 * 60 * 60 * 1000;
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function taskRowToStatusJSON(row) {
+  return {
+    status: row.status,
+    error: row.error || undefined,
+    createdAt: row.created_at ? new Date(row.created_at).getTime() : undefined
+  };
+}
+
+function createGenerateTask(keyId, body) {
+  const id = crypto.randomBytes(16).toString('hex');
+  const now = nowIso();
+  const expiresAt = new Date(Date.now() + TASK_TTL_MS).toISOString();
+  db.prepare(`INSERT INTO generate_tasks (id, status, key_id, request_json, created_at, updated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(id, 'queued', keyId, JSON.stringify(body), now, now, expiresAt);
+  return id;
+}
+
+function getGenerateTask(taskId) {
+  return db.prepare('SELECT * FROM generate_tasks WHERE id = ?').get(taskId);
+}
+
+function markExpiredTasks() {
+  const now = nowIso();
+  db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?), last_error_at = COALESCE(last_error_at, ?) WHERE status IN ('queued','running') AND expires_at <= ?")
+    .run(now, now, now, now);
+}
+
+function deleteOldTerminalTasks() {
+  const cutoff = new Date(Date.now() - TERMINAL_TASK_RETENTION_MS).toISOString();
+  db.prepare("DELETE FROM generate_tasks WHERE status IN ('done','error','expired') AND updated_at <= ?")
+    .run(cutoff);
+}
+
+function startTaskCleanupLoop() {
+  markExpiredTasks();
+  deleteOldTerminalTasks();
+  setInterval(() => {
+    markExpiredTasks();
+    deleteOldTerminalTasks();
+  }, 10 * 60 * 1000);
+}
+
+async function recoverPendingTasksOnStartup() {
+  markExpiredTasks();
+  const rows = db.prepare("SELECT id, key_id, request_json FROM generate_tasks WHERE status IN ('queued','running') AND expires_at > ? ORDER BY created_at ASC").all(nowIso());
+  for (const row of rows) {
+    try {
+      if (row.request_json) runGenerateTask(row.id, row.key_id, JSON.parse(row.request_json));
+    } catch (err) {
+      const now = nowIso();
+      db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+        .run('恢复任务失败: ' + err.message, now, now, now, row.id);
+    }
+  }
+}
+
+const finishGenerateTaskSuccess = db.transaction((taskId, keyId, resultJson) => {
+  const now = nowIso();
+  db.prepare("UPDATE generate_tasks SET status = 'done', result_json = ?, error = NULL, updated_at = ?, completed_at = ? WHERE id = ?")
+    .run(resultJson, now, now, taskId);
+  db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
+    .run(now, keyId);
+});
 
 function restoreKeysFromBackupFile() {
   if (db.prepare('SELECT COUNT(*) as c FROM keys').get().c > 0) return;
@@ -164,6 +255,8 @@ function startPeriodicKeyBackup() {
 
 restoreKeysFromBackupFile();
 startPeriodicKeyBackup();
+startTaskCleanupLoop();
+recoverPendingTasksOnStartup().catch(err => console.error('Recover pending tasks failed:', err));
 
 // --- Middleware ---
 app.use(express.json({ limit: '10mb' }));
@@ -179,15 +272,6 @@ app.use('/api', (req, res, next) => {
 });
 
 // --- Upstream Proxy ---
-const tasks = new Map();
-
-function createTask() {
-  const id = crypto.randomBytes(16).toString('hex');
-  tasks.set(id, { status: 'queued', createdAt: Date.now() });
-  setTimeout(() => tasks.delete(id), 30 * 60 * 1000);
-  return id;
-}
-
 function proxyRequest(targetPath, method, headers, body) {
   return new Promise((resolve, reject) => {
     const base = UPSTREAM_BASE.endsWith('/') ? UPSTREAM_BASE : UPSTREAM_BASE + '/';
@@ -220,10 +304,18 @@ function proxyRequest(targetPath, method, headers, body) {
 
 // --- User API: Generate ---
 async function runGenerateTask(taskId, keyId, body) {
-  const task = tasks.get(taskId);
+  const task = getGenerateTask(taskId);
   if (!task) return;
-  task.status = 'running';
-  let quotaIncremented = false;
+  const now = nowIso();
+  if (new Date(task.expires_at) <= new Date()) {
+    db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?")
+      .run(now, now, taskId);
+    return;
+  }
+
+  db.prepare("UPDATE generate_tasks SET status = 'running', error = NULL, updated_at = ?, started_at = COALESCE(started_at, ?), attempt_count = attempt_count + 1 WHERE id = ?")
+    .run(now, now, taskId);
+
   try {
     const result = await proxyRequest('/images/generations', 'POST', {
       'Content-Type': 'application/json',
@@ -231,28 +323,25 @@ async function runGenerateTask(taskId, keyId, body) {
     }, JSON.stringify(body));
 
     if (result.status === 200) {
-      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
-        .run(new Date().toISOString(), keyId);
-      quotaIncremented = true;
+      finishGenerateTaskSuccess(taskId, keyId, result.body.toString('utf8'));
       scheduleKeyBackup();
-      task.status = 'done';
-      task.result = JSON.parse(result.body.toString('utf8'));
     } else {
-      task.status = 'error';
+      let errorMessage = '';
       try {
         const errBody = JSON.parse(result.body.toString('utf8'));
-        task.error = typeof errBody.error === 'string' ? errBody.error : JSON.stringify(errBody.error || errBody);
+        errorMessage = typeof errBody.error === 'string' ? errBody.error : JSON.stringify(errBody.error || errBody);
       } catch {
-        task.error = result.body.toString('utf8') || ('HTTP ' + result.status);
+        errorMessage = result.body.toString('utf8') || ('HTTP ' + result.status);
       }
+      const failedAt = nowIso();
+      db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+        .run(errorMessage, failedAt, failedAt, failedAt, taskId);
     }
   } catch (e) {
-    task.status = 'error';
-    task.error = '上游请求失败: ' + e.message;
+    const failedAt = nowIso();
+    db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+      .run('上游请求失败: ' + e.message, failedAt, failedAt, failedAt, taskId);
   }
-
-  // If task failed and quota was not incremented, no refund needed
-  // Quota is only incremented on success (status 200)
 }
 
 app.post('/api/generate', async (req, res) => {
@@ -273,23 +362,34 @@ app.post('/api/generate', async (req, res) => {
   if (!body.model) body.model = 'gpt-image-2';
   if (!body.response_format) body.response_format = 'b64_json';
 
-  const taskId = createTask();
+  const taskId = createGenerateTask(v.key.id, body);
   runGenerateTask(taskId, v.key.id, body);
   res.status(202).json({ taskId });
 });
 
 app.get('/api/tasks/:id', (req, res) => {
-  const task = tasks.get(req.params.id);
+  const task = getGenerateTask(req.params.id);
   if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
+  if (new Date(task.expires_at) <= new Date() && !['done', 'error', 'expired'].includes(task.status)) {
+    const now = nowIso();
+    db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?")
+      .run(now, now, task.id);
+    return res.json({ status: 'expired', error: '任务已过期', createdAt: new Date(task.created_at).getTime() });
+  }
   if (task.status === 'done') return res.json({ status: 'done', resultUrl: `/api/tasks/${req.params.id}/result` });
-  res.json({ status: task.status, error: task.error, createdAt: task.createdAt });
+  if (task.status === 'expired') return res.json({ status: 'expired', error: task.error || '任务已过期', createdAt: new Date(task.created_at).getTime() });
+  res.json(taskRowToStatusJSON(task));
 });
 
 app.get('/api/tasks/:id/result', (req, res) => {
-  const task = tasks.get(req.params.id);
+  const task = getGenerateTask(req.params.id);
   if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
   if (task.status !== 'done') return res.status(409).json({ error: '任务尚未完成' });
-  res.json(task.result);
+  try {
+    res.json(JSON.parse(task.result_json));
+  } catch {
+    res.status(500).json({ error: '任务结果损坏' });
+  }
 });
 
 // --- User API: Edit ---
