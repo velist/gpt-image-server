@@ -1,5 +1,17 @@
 [
   {
+    "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
+    "key": "sk-gi-0004d1b26c62033f9b5a6c18c13f04bc9b6319b19866ff99",
+    "name": "钊曼",
+    "maxImages": 10,
+    "usedImages": 0,
+    "remaining": 10,
+    "expiresAt": null,
+    "createdAt": "2026-04-25 01:25:11",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "627abcfc-ab46-4cd3-a402-c814bbc6118e",
     "key": "sk-gi-9d10f04c41626e6c856a0e69766e784e555df0f0eb6ffb50",
     "name": "github-auto-backup-test",
