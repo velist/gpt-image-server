@@ -22,7 +22,7 @@
   --shadow:0 10px 24px rgba(103,86,72,.10);
   --radius:14px;
 }
-body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:linear-gradient(180deg,#f6f1ea,#eee6dd);color:var(--text);min-height:100vh;overflow:hidden}
+body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:linear-gradient(180deg,#f6f1ea,#eee6dd);color:var(--text);min-height:100vh;overflow:auto}
 button,input,textarea,select{font:inherit}
 button{cursor:pointer}
 a{color:inherit;text-decoration:none}
@@ -90,8 +90,8 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
 .btn-sm{flex:1;background:#2b2b2b;border:1px solid #2b2b2b;color:#fff;padding:9px 10px;border-radius:10px}
 .btn-sm:hover{background:#1f1f1f;border-color:#1f1f1f}
 .preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.preset-btn,.count-btn{background:var(--panel-3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;text-align:left;transition:.18s}
-.preset-btn.active,.count-btn.active{background:#e5dbd1;border-color:#b9ab9b}
+.preset-btn,.count-btn{background:var(--panel-3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;text-align:left;transition:.18s;box-shadow:inset 0 0 0 0 transparent}
+.preset-btn.active,.count-btn.active{background:#e5dbd1;border-color:#8f8071;box-shadow:inset 0 0 0 2px #b9ab9b}
 .preset-btn .name{display:block;font-weight:700;font-size:13px}
 .preset-btn .dim{display:block;font-size:12px;color:var(--muted);margin-top:3px}
 .count-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -105,11 +105,13 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
 .primary-wide{width:100%;padding:13px 16px;border:1px solid #2b2b2b;border-radius:14px;background:#2b2b2b;color:#fff;font-weight:700;box-shadow:var(--shadow)}
 .primary-wide:hover:not(:disabled){background:#1f1f1f;border-color:#1f1f1f}
 .primary-wide:disabled{opacity:.6;cursor:not-allowed}
-.task-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:700px}
+.task-layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;min-height:700px}
 .task-list{display:flex;flex-direction:column;gap:10px;max-height:700px;overflow:auto}
-.task-item{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:16px;padding:14px;transition:.18s}
+.task-item{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:16px;padding:10px;transition:.18s;text-align:left}
 .task-item:hover{border-color:#b9ab9b}
-.task-item.active{border-color:#aa9987;background:rgba(124,106,247,.08)}
+.task-item.active{border-color:#8f8071;background:#efe4d8}
+.task-thumb{width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#ddd2c8;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;margin-bottom:10px}
+.task-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .task-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
 .badge.done{background:#e2ebe1;color:#657967}
@@ -118,8 +120,11 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
 .task-meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
 .task-prompt{font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
 .detail-panel{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:18px;padding:18px;min-height:700px}
-.detail-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
-.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
+.detail-shell{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:18px;align-items:start}
+.detail-preview{background:var(--panel-2);border:1px solid var(--border);border-radius:18px;padding:14px}
+.detail-preview img{width:100%;display:block;border-radius:14px;background:#ddd2c8}
+.detail-sidebar{display:flex;flex-direction:column;gap:12px}
+.detail-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:0}
 .detail-thumb{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
 .detail-thumb img{display:block;width:100%}
 .detail-actions{padding:10px}
@@ -207,6 +212,9 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
                   <span>可直接输入电影海报、产品图、插画风格等描述</span>
                   <span>Ctrl+Enter 快速生成</span>
                 </div>
+                <div style="margin-top:14px;margin-bottom:16px">
+                  <button class="primary-wide" id="generateBtn">生成</button>
+                </div>
                 <div class="chips" id="quickPromptChips">
                   <button class="chip" data-prompt="赛博朋克城市夜景，霓虹灯雨夜，电影级构图">赛博朋克夜景</button>
                   <button class="chip" data-prompt="哆啦A梦，未来机械装甲风，电影海报，强烈光影">机械哆啦A梦海报</button>
@@ -256,6 +264,11 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
                   <button class="preset-btn" data-size="2048x2048"><span class="name">2K 方图</span><span class="dim">2048×2048</span></button>
                   <button class="preset-btn" data-size="3840x2160"><span class="name">4K 横图</span><span class="dim">3840×2160</span></button>
                   <button class="preset-btn" data-size="2160x3840"><span class="name">4K 竖图</span><span class="dim">2160×3840</span></button>
+                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">宽×高，最大 4000</span></button>
+                </div>
+                <div class="field hidden" id="customSizeField" style="margin-top:12px">
+                  <label>自定义尺寸</label>
+                  <input type="text" id="customSizeInput" placeholder="例如 1920x1080，最大 4000x4000">
                 </div>
               </div>
             </div>
@@ -289,7 +302,6 @@ textarea{min-height:150px;resize:vertical;line-height:1.55}
                     <button class="count-btn" data-count="6">6</button>
                   </div>
                 </div>
-                <button class="primary-wide" id="generateBtn">生成</button>
               </div>
             </div>
           </div>
@@ -585,8 +597,9 @@ function renderTaskList(){
   }
   state.history.forEach(item=>{
     const node=document.createElement('button');
+    const cover=item.result?.items?.[0]?.dataUrl||item.result?.items?.[0]?.url||'';
     node.className='task-item'+(state.selectedTaskId===item.id?' active':'');
-    node.innerHTML=`<div class="task-top"><span class="badge ${statusClass(item.status)}">${statusLabel(item.status)}</span><span style="font-size:12px;color:var(--muted)">${formatTime(item.createdAt)}</span></div><div class="task-prompt">${escapeHtml(shortPrompt(item.request?.prompt))}</div><div class="task-meta"><span>${item.mode==='img'?'图生图':'文生图'}</span><span>${escapeHtml(item.request?.size||'—')}</span><span>${escapeHtml(String(item.request?.count||1))} 张</span></div>`;
+    node.innerHTML=`<div class="task-thumb">${cover?`<img src="${cover}" alt="task-cover">`:`<span>${escapeHtml(statusLabel(item.status))}</span>`}</div><div class="task-top"><span class="badge ${statusClass(item.status)}">${statusLabel(item.status)}</span><span style="font-size:12px;color:var(--muted)">${formatTime(item.createdAt)}</span></div><div class="task-prompt">${escapeHtml(shortPrompt(item.request?.prompt))}</div><div class="task-meta"><span>${item.mode==='img'?'图生图':'文生图'}</span><span>${escapeHtml(item.request?.size||'—')}</span><span>${escapeHtml(String(item.request?.count||1))} 张</span></div>`;
     node.onclick=()=>{state.selectedTaskId=item.id;renderTaskList();renderTaskDetail(item.id)};
     list.appendChild(node);
   });
@@ -597,14 +610,27 @@ function renderTaskDetail(id){
   if(!id){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>选择一条任务查看详情、结果和失败原因。</p></div>';return}
   const item=state.history.find(x=>x.id===id);
   if(!item){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>任务不存在。</p></div>';return}
-  const resultHtml=item.result?.items?.length?`<div class="detail-grid">${item.result.items.map((img,idx)=>`<div class="detail-thumb"><img src="${img.dataUrl||img.url}" alt="result-${idx}"><div class="detail-actions"><button class="btn-sm" onclick="downloadUrl('${(img.dataUrl||img.url).replace(/'/g,"&#39;")}','task-${idx+1}.png')">下载</button></div></div>`).join('')}</div>`:'<div class="note" style="margin-top:16px">当前没有可展示的结果图片。</div>';
-  const errorBlock=item.error?`<div class="status visible error" style="margin-top:16px">${escapeHtml(item.error)}</div>`:'';
-  panel.innerHTML=`<div class="detail-header"><div><div class="badge ${statusClass(item.status)}">${statusLabel(item.status)}</div><h3 style="margin-top:12px;font-size:22px">${escapeHtml(shortPrompt(item.request?.prompt))}</h3><div class="note" style="margin-top:10px">创建于 ${formatTime(item.createdAt)} · ${item.mode==='img'?'图生图':'文生图'} · ${escapeHtml(item.request?.size||'—')} · ${escapeHtml(String(item.request?.count||1))} 张</div></div><button class="top-btn" id="deleteTaskBtn">删除记录</button></div><div class="info-grid"><div class="kv"><small>提示词</small><strong>${escapeHtml(item.request?.prompt||'')}</strong></div><div class="kv"><small>状态</small><strong>${escapeHtml(statusLabel(item.status))}</strong></div><div class="kv"><small>耗时</small><strong>${item.durationMs?Math.round(item.durationMs/1000)+'s':'—'}</strong></div><div class="kv"><small>任务时间</small><strong>${formatTime(item.completedAt||item.updatedAt||item.createdAt)}</strong></div></div>${errorBlock}${resultHtml}`;
+  const mainImage=item.result?.items?.[0]?.dataUrl||item.result?.items?.[0]?.url||'';
+  const thumbs=item.result?.items?.length?`<div class="detail-grid">${item.result.items.map((img,idx)=>`<div class="detail-thumb"><img src="${img.dataUrl||img.url}" alt="result-${idx}"><div class="detail-actions"><button class="btn-sm" onclick="downloadUrl('${(img.dataUrl||img.url).replace(/'/g,"&#39;")}','task-${idx+1}.png')">下载</button></div></div>`).join('')}</div>`:'<div class="note">当前没有可展示的结果图片。</div>';
+  const errorBlock=item.error?`<div class="status visible error">${escapeHtml(item.error)}</div>`:'';
+  panel.innerHTML=`<div class="detail-header"><div><h3 style="font-size:22px">任务详情</h3><div class="note" style="margin-top:8px">主体优先展示图片，右侧信息纵向排列。</div></div><button class="top-btn" id="deleteTaskBtn">删除记录</button></div><div class="detail-shell"><div class="detail-preview">${mainImage?`<img src="${mainImage}" alt="task-main-image">`:'<div class="empty-state" style="min-height:420px"><div class="icon">🖼️</div><p>当前没有可展示的图片。</p></div>'}${item.result?.items?.length>1?`<div style="margin-top:14px">${thumbs}</div>`:''}</div><div class="detail-sidebar"><div class="kv"><small>提示词</small><strong>${escapeHtml(item.request?.prompt||'')}</strong></div><div class="kv"><small>状态</small><strong>${escapeHtml(statusLabel(item.status))}</strong></div><div class="kv"><small>耗时</small><strong>${item.durationMs?Math.round(item.durationMs/1000)+'s':'—'}</strong></div><div class="kv"><small>任务时间</small><strong>${formatTime(item.completedAt||item.updatedAt||item.createdAt)}</strong></div><div class="kv"><small>模式 / 尺寸</small><strong>${item.mode==='img'?'图生图':'文生图'} · ${escapeHtml(item.request?.size||'—')}</strong></div>${errorBlock}${mainImage?`<button class="btn-sm" onclick="downloadUrl('${mainImage.replace(/'/g,"&#39;")}','task-main.png')">下载主图</button>`:''}</div></div>${item.result?.items?.length&&item.result.items.length<=1?'':!item.result?.items?.length?'': ''}`;
   panel.querySelector('#deleteTaskBtn').onclick=()=>removeHistoryItem(item.id);
 }
 
 function downloadUrl(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
 function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
+function toggleCustomSizeField(){document.getElementById('customSizeField').classList.toggle('hidden',state.selectedSize!=='custom')}
+function resolveGenerateSize(){
+  if(state.selectedSize!=='custom')return state.selectedSize;
+  const raw=document.getElementById('customSizeInput').value.trim().toLowerCase().replace(/[×*]/g,'x').replace(/\s+/g,'');
+  const match=raw.match(/^(\d{1,4})x(\d{1,4})$/);
+  if(!match)throw new Error('自定义尺寸格式错误，请输入如 1920x1080');
+  const width=Number(match[1]);
+  const height=Number(match[2]);
+  if(width<1||height<1)throw new Error('自定义尺寸必须大于 0');
+  if(width>4000||height>4000)throw new Error('自定义尺寸最大支持 4000x4000');
+  return width+'x'+height;
+}
 
 function historyRecordBase({type,mode,prompt,size,quality,format,count,referenceMeta}){
   return {id:uid(),type,mode,status:'submitted',createdAt:Date.now(),updatedAt:Date.now(),request:{prompt,size,quality,format,count,model:'gpt-image-2'},source:{hasReferenceImage:!!referenceMeta,referenceImageMeta:referenceMeta||null},result:null,error:null};
@@ -639,10 +665,12 @@ async function runGenerate(){
   const format=document.getElementById('formatSelect').value;
   if(!key){setStatus('generateStatus','请输入 API Key','error');return}
   if(!prompt){setStatus('generateStatus','请输入提示词','error');return}
+  let finalSize='';
+  try{finalSize=resolveGenerateSize()}catch(e){setStatus('generateStatus',e.message||'自定义尺寸不合法','error');return}
   setGenerateLoading(true);clearStatus('generateStatus');
-  const historyItem=historyRecordBase({type:'generate',mode:'text',prompt,size:state.selectedSize,quality,format,count:state.selectedCount});
+  const historyItem=historyRecordBase({type:'generate',mode:'text',prompt,size:finalSize,quality,format,count:state.selectedCount});
   try{
-    const body={prompt,model:'gpt-image-2',size:state.selectedSize,quality,response_format:'b64_json',n:state.selectedCount,output_format:format};
+    const body={prompt,model:'gpt-image-2',size:finalSize,quality,response_format:'b64_json',n:state.selectedCount,output_format:format};
     const resp=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(body)});
     const startJson=await resp.json();
     if(!resp.ok)throw new Error(startJson.error||('HTTP '+resp.status));
@@ -763,7 +791,14 @@ function bindEvents(){
   document.getElementById('debugErrorsToggle').addEventListener('change',e=>{state.settings.debugErrors=e.target.checked;persistSettings()});
   document.getElementById('historyLimitSelect').addEventListener('change',e=>{state.settings.historyLimit=Number(e.target.value)||20;persistSettings();persistHistory();renderTaskList();if(state.selectedTaskId)renderTaskDetail(state.selectedTaskId)});
   document.getElementById('clearHistoryBtn').addEventListener('click',clearAllHistory);
-  document.querySelectorAll('.preset-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.preset-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedSize=btn.dataset.size}));
+  document.querySelectorAll('.preset-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.preset-btn').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    state.selectedSize=btn.dataset.size;
+    toggleCustomSizeField();
+    if(state.selectedSize==='custom')document.getElementById('customSizeInput').focus();
+  }));
+  document.getElementById('customSizeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runGenerate()}});
   document.querySelectorAll('.count-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.count-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedCount=Number(btn.dataset.count)||1}));
   document.querySelectorAll('#quickPromptChips .chip').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('generatePrompt').value=btn.dataset.prompt;document.getElementById('generateCounter').textContent=document.getElementById('generatePrompt').value.length+' / 4000'}));
   document.getElementById('generatePrompt').addEventListener('input',e=>{document.getElementById('generateCounter').textContent=e.target.value.length+' / 4000'});
@@ -788,6 +823,7 @@ function init(){
   const savedKey=localStorage.getItem(STORAGE_KEYS.key)||'';
   document.getElementById('apiKey').value=savedKey;
   document.getElementById('credentialInput').value=savedKey;
+  toggleCustomSizeField();
   syncCredentialViews();
   if(savedKey)fetchQuota(savedKey);
   if(state.history.length){
