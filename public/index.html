@@ -365,8 +365,18 @@ async function generate(){
     displayResults(json.data,document.getElementById('format').value);
     fetchQuota(document.getElementById('apiKey').value.trim());
   }catch(e){
-    const msg=e.message==='Failed to fetch'?'请求中断，可能是生成耗时过长。请先用 low 质量或更小尺寸重试。':e.message;
+    let msg;
+    if(e.message==='Failed to fetch'){
+      msg='请求中断，可能是生成耗时过长。请先用 low 质量或更小尺寸重试。';
+    }else if(e.message){
+      msg=e.message;
+    }else if(typeof e==='string'){
+      msg=e;
+    }else{
+      try{msg=JSON.stringify(e)}catch{msg=String(e)}
+    }
     showStatus('请求失败：'+msg,'error');
+    console.error('Generation error:',e);
   }
   setLoading(false);
 }
