@@ -5,868 +5,810 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPT-Image-2 Studio</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg: #0f0f13;
-  --surface: #1a1a24;
-  --surface2: #22222f;
-  --border: #2e2e42;
-  --accent: #7c6af7;
-  --accent-hover: #9585ff;
-  --text: #e8e8f0;
-  --text-muted: #7a7a9a;
-  --danger: #f76a6a;
-  --success: #6af7a0;
-  --warn: #ffaa00;
-  --radius: 10px;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4efe8;
+  --panel:#f7f2ec;
+  --panel-2:#efe7df;
+  --panel-3:#e5dbd1;
+  --border:#d1c4b6;
+  --text:#5b554f;
+  --muted:#9f9488;
+  --accent:#b8a99a;
+  --accent-2:#cdbfb1;
+  --success:#7f9a84;
+  --warn:#c6a76b;
+  --danger:#bf7b73;
+  --shadow:0 10px 24px rgba(103,86,72,.10);
+  --radius:14px;
 }
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-}
-
-.header h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, var(--accent), #ff3366);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.quota-badge {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.quota-badge.visible { display: flex; }
-.quota-count { font-weight: 600; }
-
-.container {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-
-.sidebar {
-  width: 360px;
-  min-width: 360px;
-  border-right: 1px solid var(--border);
-  background: var(--surface);
-  overflow-y: auto;
-  padding: 20px;
-}
-
-.main {
-  flex: 1;
-  overflow-y: auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
-}
-
-.field:last-child { margin-bottom: 0; }
-
-.field label {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-input[type="text"], input[type="password"], textarea, select {
-  width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-size: 0.9rem;
-  padding: 9px 12px;
-  outline: none;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-
-input:focus, textarea:focus, select:focus {
-  border-color: var(--accent);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 100px;
-  line-height: 1.5;
-}
-
-select {
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a7a9a'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  padding-right: 32px;
-}
-
-.size-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.size-btn {
-  padding: 10px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  text-align: left;
-}
-
-.size-btn:hover {
-  border-color: var(--accent);
-  background: var(--surface2);
-}
-
-.size-btn.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-}
-
-.size-btn .label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.size-btn .dim {
-  display: block;
-  font-size: 0.7rem;
-  opacity: 0.7;
-}
-
-.count-grid {
-  display: flex;
-  gap: 8px;
-}
-
-.count-btn {
-  flex: 1;
-  padding: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--text);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  font-weight: 600;
-}
-
-.count-btn:hover {
-  border-color: var(--accent);
-}
-
-.count-btn.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
-}
-
-.mode-toggle {
-  display: flex;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 3px;
-  gap: 3px;
-  margin-bottom: 16px;
-}
-
-.mode-btn {
-  flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  font-weight: 600;
-}
-
-.mode-btn.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.upload-zone {
-  border: 2px dashed var(--border);
-  border-radius: 8px;
-  padding: 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.15s;
-  position: relative;
-  margin-bottom: 12px;
-}
-
-.upload-zone:hover {
-  border-color: var(--accent);
-  background: rgba(124, 106, 247, 0.06);
-}
-
-.upload-zone input[type="file"] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  cursor: pointer;
-  width: 100%;
-  height: 100%;
-}
-
-.upload-text {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-.upload-text strong {
-  color: var(--text);
-  display: block;
-  margin-bottom: 4px;
-}
-
-.preview-wrap {
-  position: relative;
-  display: inline-block;
-}
-
-.preview-wrap img {
-  max-height: 160px;
-  max-width: 100%;
-  border-radius: 6px;
-  display: block;
-}
-
-.remove-btn {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--danger);
-  border: none;
-  color: #fff;
-  font-size: 0.75rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-generate {
-  width: 100%;
-  padding: 13px;
-  background: var(--accent);
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-
-.btn-generate:hover:not(:disabled) {
-  background: var(--accent-hover);
-}
-
-.btn-generate:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.status {
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  margin-bottom: 16px;
-  display: none;
-  line-height: 1.5;
-}
-
-.status.visible { display: block; }
-
-.status.error {
-  background: rgba(247, 106, 106, 0.12);
-  color: var(--danger);
-  border: 1px solid rgba(247, 106, 106, 0.25);
-}
-
-.status.info {
-  background: rgba(124, 106, 247, 0.1);
-  color: #a89fff;
-  border: 1px solid rgba(124, 106, 247, 0.2);
-}
-
-.status.success {
-  background: rgba(106, 247, 160, 0.1);
-  color: var(--success);
-  border: 1px solid rgba(106, 247, 160, 0.2);
-}
-
-.results {
-  width: 100%;
-  max-width: 1200px;
-}
-
-.result-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.result-card {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: transform 0.2s;
-}
-
-.result-card:hover {
-  transform: translateY(-2px);
-}
-
-.result-card img {
-  width: 100%;
-  display: block;
-}
-
-.result-actions {
-  padding: 12px;
-  display: flex;
-  gap: 8px;
-}
-
-.btn-sm {
-  flex: 1;
-  padding: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-  font-weight: 500;
-}
-
-.btn-sm:hover {
-  border-color: var(--accent);
-}
-
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-}
-
-.empty-state .icon {
-  font-size: 3rem;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-.hidden { display: none !important; }
-
-@media (max-width: 768px) {
-  .container { flex-direction: column; }
-  .sidebar { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
-  .size-grid { grid-template-columns: 1fr; }
-}
+body{font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:linear-gradient(180deg,#f6f1ea,#eee6dd);color:var(--text);min-height:100vh;overflow:hidden}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
+.hidden{display:none!important}
+.app{display:grid;grid-template-columns:220px 1fr;height:100vh}
+.sidebar{background:rgba(247,242,236,.96);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 14px;gap:18px}
+.brand{display:flex;align-items:center;gap:12px;padding:8px 10px}
+.brand-badge{width:38px;height:38px;border-radius:12px;background:#2b2b2b;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;box-shadow:var(--shadow)}
+.brand h1{font-size:20px;line-height:1.1}
+.brand small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:6px}
+.nav-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:transparent;border:1px solid transparent;color:var(--text);padding:12px 12px;border-radius:12px;transition:.18s}
+.nav-btn:hover{background:var(--panel-2);border-color:var(--border)}
+.nav-btn.active{background:#e2d7cd;border-color:#b9ab9b}
+.nav-btn .left{display:flex;align-items:center;gap:10px;font-weight:600}
+.nav-icon{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;color:#7e7469;flex:0 0 16px}
+.nav-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-btn.active .nav-icon{color:#4e4842}
+.nav-btn .hint{font-size:12px;color:var(--muted);padding:2px 6px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--border)}
+.sidebar-footer{margin-top:auto;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:12px}
+.sidebar-footer .label{font-size:12px;color:var(--muted);margin-bottom:8px}
+.credential-box{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px;border-radius:10px;background:var(--panel-3);border:1px solid var(--border)}
+.credential-box .meta{display:flex;flex-direction:column;gap:2px;min-width:0}
+.credential-box .meta strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.credential-box .meta span{font-size:12px;color:var(--muted)}
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{height:68px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:rgba(246,240,233,.88);backdrop-filter:blur(10px)}
+.topbar h2{font-size:24px}
+.topbar p{font-size:13px;color:var(--muted);margin-top:4px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.top-btn{background:#2b2b2b;border:1px solid #2b2b2b;color:#fff;padding:10px 14px;border-radius:12px;transition:.18s}
+.top-btn:hover{background:#1f1f1f;border-color:#1f1f1f}
+.primary-btn{background:#2b2b2b;border:1px solid #2b2b2b;color:#fff;box-shadow:var(--shadow)}
+.content{flex:1;overflow:auto;padding:22px}
+.page{display:none}
+.page.active{display:block}
+.page-grid{display:grid;grid-template-columns:minmax(340px,1fr) 360px;gap:18px;align-items:start}
+.card{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}
+.card-body{padding:18px}
+.card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title h3{font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+textarea,input[type=text],input[type=password],select{width:100%;background:var(--panel-3);border:1px solid var(--border);color:var(--text);border-radius:12px;padding:12px 14px;outline:none;transition:border-color .18s}
+textarea:focus,input:focus,select:focus{border-color:#aa9987}
+textarea{min-height:150px;resize:vertical;line-height:1.55}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;color:var(--muted);font-weight:600}
+.prompt-card .editor-tools{display:flex;align-items:center;justify-content:space-between;margin-top:10px;color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.chip{background:var(--panel-3);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:999px;font-size:13px;transition:.18s}
+.chip:hover{border-color:#b9ab9b}
+.status{display:none;padding:12px 14px;border-radius:14px;margin-bottom:16px;line-height:1.5;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.status.visible{display:block}
+.status.info{background:#ece4db;border:1px solid #d1c4b6;color:#6f645c}
+.status.success{background:#e6eee6;border:1px solid #b9c8b6;color:#647866}
+.status.error{background:#f4e6e4;border:1px solid #d8b2ab;color:#956861}
+.result-stage{min-height:620px;display:flex;flex-direction:column;gap:18px}
+.empty-state{flex:1;min-height:420px;border:1px dashed var(--border);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--muted);padding:30px;background:#f3ece5}
+.empty-state .icon{font-size:42px;margin-bottom:16px;opacity:.7}
+.result-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.result-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.result-card{background:var(--panel-2);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.result-card img{width:100%;display:block;background:#0a0a0a}
+.result-actions{display:flex;gap:8px;padding:10px}
+.btn-sm{flex:1;background:#2b2b2b;border:1px solid #2b2b2b;color:#fff;padding:9px 10px;border-radius:10px}
+.btn-sm:hover{background:#1f1f1f;border-color:#1f1f1f}
+.preset-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.preset-btn,.count-btn{background:var(--panel-3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:12px;text-align:left;transition:.18s}
+.preset-btn.active,.count-btn.active{background:#e5dbd1;border-color:#b9ab9b}
+.preset-btn .name{display:block;font-weight:700;font-size:13px}
+.preset-btn .dim{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.count-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.upload-zone{border:1px dashed var(--border);background:rgba(255,255,255,.02);border-radius:16px;padding:22px;text-align:center;position:relative;transition:.18s}
+.upload-zone.dragover,.upload-zone:hover{border-color:#b9ab9b;background:rgba(124,106,247,.08)}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload-zone strong{display:block;margin-bottom:6px}
+.preview-wrap{margin-top:14px;position:relative;display:inline-block;max-width:100%}
+.preview-wrap img{max-width:100%;max-height:220px;border-radius:12px;display:block}
+.remove-btn{position:absolute;top:-8px;right:-8px;width:28px;height:28px;border:none;border-radius:999px;background:var(--danger);color:#fff;font-weight:700}
+.primary-wide{width:100%;padding:13px 16px;border:1px solid #2b2b2b;border-radius:14px;background:#2b2b2b;color:#fff;font-weight:700;box-shadow:var(--shadow)}
+.primary-wide:hover:not(:disabled){background:#1f1f1f;border-color:#1f1f1f}
+.primary-wide:disabled{opacity:.6;cursor:not-allowed}
+.task-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;min-height:700px}
+.task-list{display:flex;flex-direction:column;gap:10px;max-height:700px;overflow:auto}
+.task-item{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:16px;padding:14px;transition:.18s}
+.task-item:hover{border-color:#b9ab9b}
+.task-item.active{border-color:#aa9987;background:rgba(124,106,247,.08)}
+.task-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.done{background:#e2ebe1;color:#657967}
+.badge.running,.badge.submitted{background:#ece4db;color:#73675e}
+.badge.error,.badge.expired{background:#f2e2df;color:#93645d}
+.task-meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:10px}
+.task-prompt{font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:10px}
+.detail-panel{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:18px;padding:18px;min-height:700px}
+.detail-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:16px}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:16px}
+.detail-thumb{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.detail-thumb img{display:block;width:100%}
+.detail-actions{padding:10px}
+.key-card,.settings-card{background:rgba(247,242,236,.96);border:1px solid var(--border);border-radius:18px;padding:18px;max-width:860px}
+.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.kv{background:var(--panel-2);border:1px solid var(--border);border-radius:14px;padding:14px}
+.kv small{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+.kv strong{font-size:14px;word-break:break-all}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.note{font-size:13px;color:var(--muted);line-height:1.6}
+.switch{display:flex;align-items:center;justify-content:space-between;padding:14px;background:var(--panel-2);border:1px solid var(--border);border-radius:14px}
+.switch input{width:auto;transform:scale(1.15)}
+@media (max-width:1180px){.page-grid{grid-template-columns:1fr}.task-layout{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.content{padding:14px}.topbar{padding:0 14px}}
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>GPT-Image-2 Studio</h1>
-  <div class="header-right">
-    <div class="quota-badge" id="quotaInfo">
-      <span>剩余额度:</span>
-      <span class="quota-count" id="quotaCount">-</span>
-      <span>张</span>
-    </div>
-    <a href="/imgadmin" target="_blank" style="color: var(--accent); text-decoration: none; font-size: 0.9rem;">管理后台</a>
-  </div>
-</div>
-
-<div class="container">
-  <div class="sidebar">
-    <div class="card">
-      <div class="card-title">🔑 API 密钥</div>
-      <div class="field">
-        <label>API Key</label>
-        <input type="password" id="apiKey" placeholder="sk-gi-..." autocomplete="off">
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-badge">GI</div>
+      <div>
+        <h1>GPT Image 2</h1>
+        <small>本地工作台</small>
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">🎨 生成模式</div>
-      <div class="mode-toggle">
-        <button class="mode-btn active" id="modeText" onclick="setMode('text')">文生图</button>
-        <button class="mode-btn" id="modeImg" onclick="setMode('img')">图生图</button>
-      </div>
+    <nav class="nav">
+      <button class="nav-btn active" data-page="generate">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v6"></path><path d="M12 15v6"></path><path d="M5.6 5.6l4.2 4.2"></path><path d="M14.2 14.2l4.2 4.2"></path><path d="M3 12h6"></path><path d="M15 12h6"></path><path d="M5.6 18.4l4.2-4.2"></path><path d="M14.2 9.8l4.2-4.2"></path></svg></span><span>生成</span></span>
+        <span class="hint">⌘1</span>
+      </button>
+      <button class="nav-btn" data-page="edit">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V16l10.6-10.6a1.7 1.7 0 0 1 2.4 0l1.6 1.6a1.7 1.7 0 0 1 0 2.4L8 20H4z"></path><path d="M13.5 6.5l4 4"></path></svg></span><span>编辑</span></span>
+        <span class="hint">⌘2</span>
+      </button>
+      <button class="nav-btn" data-page="tasks">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg></span><span>任务</span></span>
+        <span class="hint">⌘3</span>
+      </button>
+      <button class="nav-btn" data-page="credentials">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 14a4 4 0 1 1 0-8h6a5 5 0 1 1 0 10H9"></path><path d="M9 14h6"></path><path d="M15 14v3"></path><path d="M18 14v2"></path></svg></span><span>凭证</span></span>
+        <span class="hint">⌘4</span>
+      </button>
+      <button class="nav-btn" data-page="settings">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a1 1 0 0 1 0 1.4l-1.3 1.3a1 1 0 0 1-1.4 0l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a1 1 0 0 1-1.4 0l-1.3-1.3a1 1 0 0 1 0-1.4l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a1 1 0 0 1 0-1.4l1.3-1.3a1 1 0 0 1 1.4 0l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a1 1 0 0 1 1.4 0l1.3 1.3a1 1 0 0 1 0 1.4l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-.2a1 1 0 0 0-.9.6z"></path></svg></span><span>设置</span></span>
+        <span class="hint">⌘5</span>
+      </button>
+    </nav>
 
-      <div id="uploadSection" class="hidden">
-        <div class="upload-zone" id="uploadZone">
-          <input type="file" id="imageInput" accept="image/*">
-          <div class="upload-text" id="uploadText">
-            <strong>点击或拖拽上传图片</strong>
-            支持 PNG / JPG / WEBP
+    <div class="sidebar-footer">
+      <div class="label">默认凭证</div>
+      <div class="credential-box">
+        <div class="meta">
+          <strong id="sidebarCredentialName">（未设置）</strong>
+          <span id="sidebarCredentialMeta">API Key 本地保存</span>
+        </div>
+        <span id="sidebarCredentialState">—</span>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h2 id="pageTitle">图像生成</h2>
+        <p id="pageSubtitle">写提示词，生成候选并保存本地历史</p>
+      </div>
+      <div class="topbar-right">
+        <button class="top-btn" id="quotaBtn">额度：<span id="quotaText">—</span></button>
+        <button class="top-btn primary-btn" id="newTaskBtn">新建生成</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <section class="page active" data-page="generate">
+        <div class="status" id="generateStatus"></div>
+        <div class="page-grid">
+          <div class="left-col">
+            <div class="card prompt-card">
+              <div class="card-body">
+                <div class="card-title"><h3>生成</h3><span id="generateCounter">0 / 4000</span></div>
+                <textarea id="generatePrompt" placeholder="描述你想生成的图像..."></textarea>
+                <div class="editor-tools">
+                  <span>可直接输入电影海报、产品图、插画风格等描述</span>
+                  <span>Ctrl+Enter 快速生成</span>
+                </div>
+                <div class="chips" id="quickPromptChips">
+                  <button class="chip" data-prompt="赛博朋克城市夜景，霓虹灯雨夜，电影级构图">赛博朋克夜景</button>
+                  <button class="chip" data-prompt="哆啦A梦，未来机械装甲风，电影海报，强烈光影">机械哆啦A梦海报</button>
+                  <button class="chip" data-prompt="钢铁侠归来，电影海报，金红战甲，火花与烟雾">钢铁侠归来海报</button>
+                  <button class="chip" data-prompt="高级产品摄影，白底，玻璃香水瓶，柔和补光">产品摄影白底</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card result-stage" id="generateStageCard">
+              <div class="card-body">
+                <div class="result-toolbar">
+                  <div>
+                    <div class="card-title" style="margin:0"><h3>候选</h3></div>
+                    <div class="note">候选会保存在本机缓存，失败详情也会进入任务记录。</div>
+                  </div>
+                </div>
+                <div id="generateResultsWrap">
+                  <div class="empty-state" id="generateEmptyState">
+                    <div class="icon">🎨</div>
+                    <p>从一句话开始，候选会出现在这里。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="preview-wrap hidden" id="previewWrap">
-            <img id="previewImg" src="" alt="preview">
-            <button class="remove-btn" onclick="removeImage(event)">✕</button>
+
+          <div class="right-col">
+            <div class="card">
+              <div class="card-body">
+                <div class="card-title"><h3>凭证</h3></div>
+                <div class="field">
+                  <label>API Key</label>
+                  <input type="password" id="apiKey" placeholder="sk-gi-..." autocomplete="off">
+                </div>
+                <div class="note">只保存在当前浏览器本地。用于额度查询与生成请求。</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body">
+                <div class="card-title"><h3>尺寸</h3></div>
+                <div class="preset-grid" id="sizePresetGrid">
+                  <button class="preset-btn active" data-size="1024x1024"><span class="name">方图</span><span class="dim">1024×1024</span></button>
+                  <button class="preset-btn" data-size="1536x1024"><span class="name">横图</span><span class="dim">1536×1024</span></button>
+                  <button class="preset-btn" data-size="1024x1536"><span class="name">竖图</span><span class="dim">1024×1536</span></button>
+                  <button class="preset-btn" data-size="2048x2048"><span class="name">2K 方图</span><span class="dim">2048×2048</span></button>
+                  <button class="preset-btn" data-size="3840x2160"><span class="name">4K 横图</span><span class="dim">3840×2160</span></button>
+                  <button class="preset-btn" data-size="2160x3840"><span class="name">4K 竖图</span><span class="dim">2160×3840</span></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-body">
+                <div class="card-title"><h3>输出</h3></div>
+                <div class="field">
+                  <label>质量</label>
+                  <select id="qualitySelect">
+                    <option value="auto">自动</option>
+                    <option value="high">高</option>
+                    <option value="medium" selected>中</option>
+                    <option value="low">低</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>格式</label>
+                  <select id="formatSelect">
+                    <option value="png" selected>png</option>
+                    <option value="jpeg">jpeg</option>
+                    <option value="webp">webp</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>输出数量</label>
+                  <div class="count-row" id="countRow">
+                    <button class="count-btn active" data-count="1">1</button>
+                    <button class="count-btn" data-count="2">2</button>
+                    <button class="count-btn" data-count="4">4</button>
+                    <button class="count-btn" data-count="6">6</button>
+                  </div>
+                </div>
+                <button class="primary-wide" id="generateBtn">生成</button>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="field">
-        <label>提示词</label>
-        <textarea id="prompt" placeholder="描述你想要的图片..."></textarea>
-      </div>
-    </div>
+      <section class="page" data-page="edit">
+        <div class="status" id="editStatus"></div>
+        <div class="page-grid">
+          <div>
+            <div class="card">
+              <div class="card-body">
+                <div class="card-title"><h3>参考图</h3></div>
+                <div class="upload-zone" id="uploadZone">
+                  <input type="file" id="imageInput" accept="image/*">
+                  <div id="uploadText">
+                    <strong>点击或拖拽上传图片</strong>
+                    <span class="note">支持 PNG / JPG / WEBP</span>
+                  </div>
+                  <div class="preview-wrap hidden" id="previewWrap">
+                    <img id="previewImg" src="" alt="preview">
+                    <button class="remove-btn" id="removeImageBtn">✕</button>
+                  </div>
+                </div>
+                <div class="field" style="margin-top:16px">
+                  <label>编辑提示词</label>
+                  <textarea id="editPrompt" placeholder="描述你想如何修改这张参考图..."></textarea>
+                </div>
+              </div>
+            </div>
 
-    <div class="card">
-      <div class="card-title">📐 尺寸</div>
-      <div class="size-grid">
-        <button class="size-btn active" data-size="1024x1024">
-          <span class="label">方形</span>
-          <span class="dim">1024×1024</span>
-        </button>
-        <button class="size-btn" data-size="1536x1024">
-          <span class="label">横版</span>
-          <span class="dim">1536×1024</span>
-        </button>
-        <button class="size-btn" data-size="1024x1536">
-          <span class="label">竖版</span>
-          <span class="dim">1024×1536</span>
-        </button>
-        <button class="size-btn" data-size="1920x1080">
-          <span class="label">1080p</span>
-          <span class="dim">1920×1080</span>
-        </button>
-        <button class="size-btn" data-size="2048x2048">
-          <span class="label">2K 方形</span>
-          <span class="dim">2048×2048</span>
-        </button>
-        <button class="size-btn" data-size="3840x2160">
-          <span class="label">4K</span>
-          <span class="dim">3840×2160</span>
-        </button>
-      </div>
-    </div>
+            <div class="card result-stage">
+              <div class="card-body">
+                <div class="card-title"><h3>编辑结果</h3></div>
+                <div id="editResultsWrap">
+                  <div class="empty-state" id="editEmptyState">
+                    <div class="icon">🖼️</div>
+                    <p>请先上传至少一张参考图，再输入修改描述。</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-    <div class="card">
-      <div class="card-title">⚙️ 参数</div>
-      <div class="field">
-        <label>质量</label>
-        <select id="quality">
-          <option value="auto">自动</option>
-          <option value="high">高 (high)</option>
-          <option value="medium" selected>中 (medium)</option>
-          <option value="low">低 (low)</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>输出格式</label>
-        <select id="format">
-          <option value="png" selected>PNG</option>
-          <option value="jpeg">JPEG</option>
-          <option value="webp">WebP</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>生成数量</label>
-        <div class="count-grid">
-          <button class="count-btn active" data-count="1">1</button>
-          <button class="count-btn" data-count="2">2</button>
-          <button class="count-btn" data-count="4">4</button>
-          <button class="count-btn" data-count="6">6</button>
+          <div>
+            <div class="card">
+              <div class="card-body">
+                <div class="card-title"><h3>编辑参数</h3></div>
+                <div class="field">
+                  <label>尺寸</label>
+                  <select id="editSizeSelect">
+                    <option value="1024x1024">1024x1024</option>
+                    <option value="1536x1024">1536x1024</option>
+                    <option value="1024x1536">1024x1536</option>
+                    <option value="2048x2048">2048x2048</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>质量</label>
+                  <select id="editQualitySelect">
+                    <option value="auto">自动</option>
+                    <option value="high">高</option>
+                    <option value="medium" selected>中</option>
+                    <option value="low">低</option>
+                  </select>
+                </div>
+                <button class="primary-wide" id="editBtn">开始编辑</button>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </section>
 
-    <button class="btn-generate" id="generateBtn" onclick="generate()">生成图片</button>
-  </div>
+      <section class="page" data-page="tasks">
+        <div class="task-layout">
+          <div>
+            <div class="card" style="margin-bottom:14px">
+              <div class="card-body">
+                <div class="card-title"><h3>任务</h3><button class="top-btn" id="clearHistoryBtn">清空历史</button></div>
+                <div class="note">任务与结果会保存在当前浏览器本机缓存里。</div>
+              </div>
+            </div>
+            <div class="task-list" id="taskList"></div>
+          </div>
+          <div class="detail-panel" id="taskDetailPanel">
+            <div class="empty-state" style="min-height:560px">
+              <div class="icon">🕘</div>
+              <p>选择一条任务查看详情、结果和失败原因。</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-  <div class="main">
-    <div class="status" id="status"></div>
-    <div class="results" id="results">
-      <div class="empty-state" id="emptyState">
-        <div class="icon">🎨</div>
-        <p>输入 API Key 和提示词，开始创作</p>
-      </div>
+      <section class="page" data-page="credentials">
+        <div class="key-card">
+          <div class="card-title"><h3>凭证</h3></div>
+          <div class="field">
+            <label>当前 API Key</label>
+            <input type="password" id="credentialInput" placeholder="sk-gi-...">
+          </div>
+          <div class="row" style="margin-bottom:14px">
+            <button class="top-btn" id="saveCredentialBtn">保存到本地</button>
+            <button class="top-btn" id="testCredentialBtn">测试连接</button>
+            <button class="top-btn" id="clearCredentialBtn">清空</button>
+          </div>
+          <div class="status" id="credentialStatus"></div>
+          <div class="info-grid" style="margin-top:16px">
+            <div class="kv"><small>本地保存</small><strong>只保存在浏览器 localStorage</strong></div>
+            <div class="kv"><small>默认用途</small><strong>额度查询、文生图、图生图</strong></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page" data-page="settings">
+        <div class="settings-card">
+          <div class="card-title"><h3>设置</h3></div>
+          <div class="switch" style="margin-bottom:12px">
+            <div>
+              <div style="font-weight:700">显示调试错误详情</div>
+              <div class="note">失败时在状态区域显示更完整的错误文案。</div>
+            </div>
+            <input type="checkbox" id="debugErrorsToggle" checked>
+          </div>
+          <div class="field" style="max-width:260px">
+            <label>历史保留条数</label>
+            <select id="historyLimitSelect">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="30">30</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+          <div class="note">这些设置仅保存在本机浏览器，用于本地工作台体验，不会写入服务端。</div>
+        </div>
+      </section>
     </div>
-  </div>
+  </main>
 </div>
 
 <script>
-let mode = 'text';
-let uploadedFile = null;
-let selectedSize = '1024x1024';
-let selectedCount = 1;
+const STORAGE_KEYS={key:'gpt-image-key',activeTask:'gpt-image-active-task',history:'gpt-image-history',settings:'gpt-image-settings'};
+const PAGE_META={
+  generate:{title:'图像生成',subtitle:'写提示词，生成候选并保存本地历史'},
+  edit:{title:'图像编辑',subtitle:'上传参考图，用提示词生成新的输出'},
+  tasks:{title:'任务',subtitle:'查看本机缓存里的任务历史、结果与错误'},
+  credentials:{title:'凭证',subtitle:'管理当前浏览器中保存的 API Key'},
+  settings:{title:'设置',subtitle:'本地工作台偏好与历史缓存设置'}
+};
+let state={
+  currentPage:'generate',
+  selectedSize:'1024x1024',
+  selectedCount:1,
+  uploadedFile:null,
+  history:[],
+  selectedTaskId:null,
+  activeTask:null,
+  settings:{debugErrors:true,historyLimit:20}
+};
 
-// Load saved key
-const savedKey = localStorage.getItem('gpt-image-key');
-if (savedKey) {
-  document.getElementById('apiKey').value = savedKey;
-  fetchQuota(savedKey);
+function uid(){return 'local_'+Date.now()+'_'+Math.random().toString(16).slice(2,8)}
+function saveJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
+function readJSON(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch{return fallback}}
+function escapeHtml(str){return String(str||'').replace(/[&<>"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s]))}
+function formatTime(ts){if(!ts)return '—';const d=new Date(ts);return d.toLocaleString('zh-CN',{hour12:false})}
+function shortPrompt(str){if(!str)return '（无提示词）';return str.length>68?str.slice(0,68)+'…':str}
+function statusClass(status){if(status==='done')return 'done';if(status==='running'||status==='submitted')return status;return status||'error'}
+function statusLabel(status){return ({submitted:'已提交',running:'进行中',done:'已完成',error:'失败',expired:'已过期'})[status]||'失败'}
+
+function applySettings(){
+  document.getElementById('debugErrorsToggle').checked=!!state.settings.debugErrors;
+  document.getElementById('historyLimitSelect').value=String(state.settings.historyLimit||20);
+}
+function persistSettings(){saveJSON(STORAGE_KEYS.settings,state.settings)}
+
+function switchPage(page){
+  state.currentPage=page;
+  document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.querySelectorAll('.nav-btn').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.getElementById('pageTitle').textContent=PAGE_META[page].title;
+  document.getElementById('pageSubtitle').textContent=PAGE_META[page].subtitle;
 }
 
-document.getElementById('apiKey').addEventListener('change', function() {
-  localStorage.setItem('gpt-image-key', this.value);
-  fetchQuota(this.value.trim());
-});
+function syncCredentialViews(){
+  const key=document.getElementById('apiKey').value.trim();
+  document.getElementById('credentialInput').value=key;
+  document.getElementById('sidebarCredentialName').textContent=key?key.slice(0,12)+'...'+key.slice(-6):'（未设置）';
+  document.getElementById('sidebarCredentialState').textContent=key?'已保存':'—';
+}
 
-document.getElementById('apiKey').addEventListener('input', function() {
-  clearTimeout(this._t);
-  const v = this.value.trim();
-  this._t = setTimeout(() => {
-    if (v.startsWith('sk-gi-')) fetchQuota(v);
-  }, 600);
-});
+function loadSettings(){
+  const saved=readJSON(STORAGE_KEYS.settings,null);
+  if(saved&&typeof saved==='object')state.settings={...state.settings,...saved};
+  applySettings();
+}
 
-async function fetchQuota(key) {
-  if (!key || !key.startsWith('sk-gi-')) return;
-  try {
-    const r = await fetch('/api/key-info', { headers: { 'X-API-Key': key } });
-    if (!r.ok) {
-      document.getElementById('quotaInfo').classList.remove('visible');
-      return;
+function loadHistory(){
+  state.history=readJSON(STORAGE_KEYS.history,[]);
+  if(!Array.isArray(state.history))state.history=[];
+}
+function persistHistory(){
+  const limit=Number(state.settings.historyLimit)||20;
+  state.history=state.history.slice(0,limit);
+  saveJSON(STORAGE_KEYS.history,state.history);
+}
+function upsertHistory(item){
+  const idx=state.history.findIndex(x=>x.id===item.id);
+  if(idx===-1)state.history.unshift(item); else state.history[idx]={...state.history[idx],...item};
+  state.history.sort((a,b)=>(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
+  persistHistory();
+  renderTaskList();
+  if(state.selectedTaskId===item.id)renderTaskDetail(item.id);
+}
+function removeHistoryItem(id){state.history=state.history.filter(x=>x.id!==id);persistHistory();renderTaskList();if(state.selectedTaskId===id){state.selectedTaskId=null;renderTaskDetail(null)}}
+function clearAllHistory(){state.history=[];persistHistory();renderTaskList();state.selectedTaskId=null;renderTaskDetail(null)}
+function setActiveTask(task){state.activeTask=task;if(task)saveJSON(STORAGE_KEYS.activeTask,task);else localStorage.removeItem(STORAGE_KEYS.activeTask)}
+function loadActiveTask(){state.activeTask=readJSON(STORAGE_KEYS.activeTask,null)}
+
+async function fetchQuota(key){
+  if(!key||!key.startsWith('sk-gi-')){document.getElementById('quotaText').textContent='—';return}
+  try{
+    const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});
+    if(!r.ok){document.getElementById('quotaText').textContent='不可用';return}
+    const d=await r.json();
+    document.getElementById('quotaText').textContent=d.remaining===-1?'∞':String(d.remaining);
+  }catch{document.getElementById('quotaText').textContent='失败'}
+}
+
+function setStatus(targetId,msg,type='info'){
+  const el=document.getElementById(targetId);
+  el.textContent=msg;
+  el.className='status visible '+type;
+}
+function clearStatus(targetId){const el=document.getElementById(targetId);el.className='status';el.textContent=''}
+function setGenerateLoading(loading){const btn=document.getElementById('generateBtn');btn.disabled=loading;btn.textContent=loading?'生成中...':'生成'}
+function setEditLoading(loading){const btn=document.getElementById('editBtn');btn.disabled=loading;btn.textContent=loading?'处理中...':'开始编辑'}
+
+function buildResultCards(items,format,historyId){
+  const grid=document.createElement('div');
+  grid.className='result-grid';
+  items.forEach((item,idx)=>{
+    const card=document.createElement('div');
+    card.className='result-card';
+    const img=document.createElement('img');
+    img.src=item.dataUrl||item.url||'';
+    img.alt='result-'+idx;
+    const actions=document.createElement('div');
+    actions.className='result-actions';
+    const dl=document.createElement('button');
+    dl.className='btn-sm';
+    dl.textContent='下载';
+    dl.onclick=()=>downloadUrl(img.src,'gpt-image-'+Date.now()+'-'+idx+'.png');
+    actions.appendChild(dl);
+    if(historyId){
+      const open=document.createElement('button');
+      open.className='btn-sm';
+      open.textContent='查看任务';
+      open.onclick=()=>{switchPage('tasks');state.selectedTaskId=historyId;renderTaskList();renderTaskDetail(historyId)};
+      actions.appendChild(open);
     }
-    const d = await r.json();
-    const q = document.getElementById('quotaInfo');
-    const c = document.getElementById('quotaCount');
-    c.textContent = d.remaining === -1 ? '∞' : d.remaining;
-    q.classList.add('visible');
-    q.style.color = d.remaining === -1 ? 'var(--accent)' : d.remaining > 5 ? 'var(--success)' : d.remaining > 0 ? 'var(--warn)' : 'var(--danger)';
-  } catch (e) {}
+    card.appendChild(img);
+    card.appendChild(actions);
+    grid.appendChild(card);
+  });
+  return grid;
 }
 
-// Size selection
-document.querySelectorAll('.size-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    selectedSize = this.dataset.size;
-  });
-});
-
-// Count selection
-document.querySelectorAll('.count-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    document.querySelectorAll('.count-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    selectedCount = parseInt(this.dataset.count);
-  });
-});
-
-// Mode toggle
-function setMode(m) {
-  mode = m;
-  document.getElementById('modeText').classList.toggle('active', m === 'text');
-  document.getElementById('modeImg').classList.toggle('active', m === 'img');
-  document.getElementById('uploadSection').classList.toggle('hidden', m === 'text');
-}
-
-// File upload
-const uploadZone = document.getElementById('uploadZone');
-const imageInput = document.getElementById('imageInput');
-
-uploadZone.addEventListener('dragover', e => {
-  e.preventDefault();
-  uploadZone.style.borderColor = 'var(--accent)';
-});
-
-uploadZone.addEventListener('dragleave', () => {
-  uploadZone.style.borderColor = '';
-});
-
-uploadZone.addEventListener('drop', e => {
-  e.preventDefault();
-  uploadZone.style.borderColor = '';
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
-});
-
-imageInput.addEventListener('change', () => {
-  if (imageInput.files[0]) handleFile(imageInput.files[0]);
-});
-
-function handleFile(file) {
-  if (!file.type.startsWith('image/')) {
-    showStatus('请上传图片文件', 'error');
+function renderGenerateResults(historyItem){
+  const wrap=document.getElementById('generateResultsWrap');
+  wrap.innerHTML='';
+  if(!historyItem||!historyItem.result||!historyItem.result.items||!historyItem.result.items.length){
+    wrap.innerHTML='<div class="empty-state" id="generateEmptyState"><div class="icon">🎨</div><p>从一句话开始，候选会出现在这里。</p></div>';
     return;
   }
-  uploadedFile = file;
-  const url = URL.createObjectURL(file);
-  document.getElementById('previewImg').src = url;
-  document.getElementById('previewWrap').classList.remove('hidden');
-  document.getElementById('uploadText').classList.add('hidden');
+  wrap.appendChild(buildResultCards(historyItem.result.items,historyItem.request?.format||'png',historyItem.id));
 }
 
-function removeImage(e) {
-  e.stopPropagation();
-  uploadedFile = null;
-  imageInput.value = '';
-  document.getElementById('previewWrap').classList.add('hidden');
-  document.getElementById('uploadText').classList.remove('hidden');
+function renderEditResults(historyItem){
+  const wrap=document.getElementById('editResultsWrap');
+  wrap.innerHTML='';
+  if(!historyItem||!historyItem.result||!historyItem.result.items||!historyItem.result.items.length){
+    wrap.innerHTML='<div class="empty-state" id="editEmptyState"><div class="icon">🖼️</div><p>请先上传至少一张参考图，再输入修改描述。</p></div>';
+    return;
+  }
+  wrap.appendChild(buildResultCards(historyItem.result.items,historyItem.request?.format||'png',historyItem.id));
 }
 
-// Status
-function showStatus(msg, type = 'info') {
-  const el = document.getElementById('status');
-  el.textContent = msg;
-  el.className = 'status visible ' + type;
+function renderTaskList(){
+  const list=document.getElementById('taskList');
+  list.innerHTML='';
+  if(!state.history.length){
+    list.innerHTML='<div class="card"><div class="card-body"><div class="note">还没有任务记录，先去生成一张图。</div></div></div>';
+    return;
+  }
+  state.history.forEach(item=>{
+    const node=document.createElement('button');
+    node.className='task-item'+(state.selectedTaskId===item.id?' active':'');
+    node.innerHTML=`<div class="task-top"><span class="badge ${statusClass(item.status)}">${statusLabel(item.status)}</span><span style="font-size:12px;color:var(--muted)">${formatTime(item.createdAt)}</span></div><div class="task-prompt">${escapeHtml(shortPrompt(item.request?.prompt))}</div><div class="task-meta"><span>${item.mode==='img'?'图生图':'文生图'}</span><span>${escapeHtml(item.request?.size||'—')}</span><span>${escapeHtml(String(item.request?.count||1))} 张</span></div>`;
+    node.onclick=()=>{state.selectedTaskId=item.id;renderTaskList();renderTaskDetail(item.id)};
+    list.appendChild(node);
+  });
 }
 
-function clearStatus() {
-  document.getElementById('status').className = 'status';
+function renderTaskDetail(id){
+  const panel=document.getElementById('taskDetailPanel');
+  if(!id){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>选择一条任务查看详情、结果和失败原因。</p></div>';return}
+  const item=state.history.find(x=>x.id===id);
+  if(!item){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>任务不存在。</p></div>';return}
+  const resultHtml=item.result?.items?.length?`<div class="detail-grid">${item.result.items.map((img,idx)=>`<div class="detail-thumb"><img src="${img.dataUrl||img.url}" alt="result-${idx}"><div class="detail-actions"><button class="btn-sm" onclick="downloadUrl('${(img.dataUrl||img.url).replace(/'/g,"&#39;")}','task-${idx+1}.png')">下载</button></div></div>`).join('')}</div>`:'<div class="note" style="margin-top:16px">当前没有可展示的结果图片。</div>';
+  const errorBlock=item.error?`<div class="status visible error" style="margin-top:16px">${escapeHtml(item.error)}</div>`:'';
+  panel.innerHTML=`<div class="detail-header"><div><div class="badge ${statusClass(item.status)}">${statusLabel(item.status)}</div><h3 style="margin-top:12px;font-size:22px">${escapeHtml(shortPrompt(item.request?.prompt))}</h3><div class="note" style="margin-top:10px">创建于 ${formatTime(item.createdAt)} · ${item.mode==='img'?'图生图':'文生图'} · ${escapeHtml(item.request?.size||'—')} · ${escapeHtml(String(item.request?.count||1))} 张</div></div><button class="top-btn" id="deleteTaskBtn">删除记录</button></div><div class="info-grid"><div class="kv"><small>提示词</small><strong>${escapeHtml(item.request?.prompt||'')}</strong></div><div class="kv"><small>状态</small><strong>${escapeHtml(statusLabel(item.status))}</strong></div><div class="kv"><small>耗时</small><strong>${item.durationMs?Math.round(item.durationMs/1000)+'s':'—'}</strong></div><div class="kv"><small>任务时间</small><strong>${formatTime(item.completedAt||item.updatedAt||item.createdAt)}</strong></div></div>${errorBlock}${resultHtml}`;
+  panel.querySelector('#deleteTaskBtn').onclick=()=>removeHistoryItem(item.id);
 }
 
-function setLoading(loading) {
-  document.getElementById('generateBtn').disabled = loading;
-  document.getElementById('generateBtn').textContent = loading ? '生成中...' : '生成图片';
+function downloadUrl(url,filename){const a=document.createElement('a');a.href=url;a.download=filename;a.click()}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
+
+function historyRecordBase({type,mode,prompt,size,quality,format,count,referenceMeta}){
+  return {id:uid(),type,mode,status:'submitted',createdAt:Date.now(),updatedAt:Date.now(),request:{prompt,size,quality,format,count,model:'gpt-image-2'},source:{hasReferenceImage:!!referenceMeta,referenceImageMeta:referenceMeta||null},result:null,error:null};
 }
 
-let _t0 = 0;
-
-async function waitForTask(taskId) {
-  if (!taskId) throw new Error('任务提交失败');
-  for (let i = 0; i < 180; i++) {
-    await new Promise(r => setTimeout(r, 2000));
-    const r = await fetch('/api/tasks/' + encodeURIComponent(taskId));
-    const t = await r.json();
-    if (!r.ok) throw new Error(t.error || ('HTTP ' + r.status));
-    if (t.status === 'done') {
-      const rr = await fetch(t.resultUrl);
-      const result = await rr.json();
-      if (!rr.ok) throw new Error(result.error || ('HTTP ' + rr.status));
+async function waitForTask(task){
+  for(let i=0;i<180;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const r=await fetch('/api/tasks/'+encodeURIComponent(task.serverTaskId));
+    const t=await r.json();
+    if(!r.ok)throw new Error(t.error||('HTTP '+r.status));
+    if(t.status==='done'){
+      const rr=await fetch(t.resultUrl);
+      const result=await rr.json();
+      if(!rr.ok)throw new Error(result.error||('HTTP '+rr.status));
       return result;
     }
-    if (t.status === 'error') throw new Error(t.error || '生成失败');
-    const elapsed = ((performance.now() - _t0) / 1000).toFixed(0);
-    showStatus('正在生成... ' + elapsed + 's', 'info');
+    if(t.status==='error')throw new Error(t.error||'生成失败');
+    task.status='running';
+    task.updatedAt=Date.now();
+    setActiveTask(task);
+    upsertHistory({...task});
+    setStatus('generateStatus','正在生成... '+Math.round((Date.now()-task.createdAt)/1000)+'s','info');
   }
   throw new Error('任务超时，请稍后重试');
 }
 
-async function generate() {
-  const key = document.getElementById('apiKey').value.trim();
-  if (!key) {
-    showStatus('请输入 API Key', 'error');
-    return;
-  }
-  const prompt = document.getElementById('prompt').value.trim();
-  if (!prompt) {
-    showStatus('请输入提示词', 'error');
-    return;
-  }
-  if (mode === 'img' && !uploadedFile) {
-    showStatus('请上传参考图片', 'error');
-    return;
-  }
-
-  setLoading(true);
-  clearStatus();
-  _t0 = performance.now();
-
-  try {
-    let resp;
-    if (mode === 'text') {
-      const body = {
-        prompt,
-        model: 'gpt-image-2',
-        size: selectedSize,
-        quality: document.getElementById('quality').value,
-        response_format: 'b64_json',
-        n: selectedCount
-      };
-
-      resp = await fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-API-Key': key },
-        body: JSON.stringify(body)
-      });
-
-      const startJson = await resp.json();
-      if (!resp.ok) {
-        showStatus(startJson.error || ('HTTP ' + resp.status), 'error');
-        setLoading(false);
-        return;
-      }
-
-      showStatus('任务已提交，正在生成...', 'info');
-      const json = await waitForTask(startJson.taskId);
-      const elapsed = ((performance.now() - _t0) / 1000).toFixed(1);
-      showStatus('生成成功！共 ' + json.data.length + ' 张，耗时 ' + elapsed + 's', 'success');
-      displayResults(json.data, document.getElementById('format').value);
-      fetchQuota(document.getElementById('apiKey').value.trim());
-      setLoading(false);
-      return;
-    } else {
-      const fd = new FormData();
-      fd.append('prompt', prompt);
-      fd.append('image', uploadedFile);
-      fd.append('model', 'gpt-image-2');
-      fd.append('size', selectedSize);
-      fd.append('quality', document.getElementById('quality').value);
-      fd.append('response_format', 'b64_json');
-      resp = await fetch('/api/edit', { method: 'POST', headers: { 'X-API-Key': key }, body: fd });
-    }
-
-    const json = await resp.json();
-    if (!resp.ok) {
-      showStatus(json.error || ('HTTP ' + resp.status), 'error');
-      setLoading(false);
-      return;
-    }
-    if (!json.data || !json.data.length) {
-      showStatus('API 返回空数据', 'error');
-      setLoading(false);
-      return;
-    }
-
-    const elapsed = ((performance.now() - _t0) / 1000).toFixed(1);
-    showStatus('生成成功！共 ' + json.data.length + ' 张，耗时 ' + elapsed + 's', 'success');
-    displayResults(json.data, document.getElementById('format').value);
-    fetchQuota(document.getElementById('apiKey').value.trim());
-  } catch (e) {
-    let msg;
-    if (e.message === 'Failed to fetch') {
-      msg = '请求中断，可能是生成耗时过长。请先用 low 质量或更小尺寸重试。';
-    } else if (e.message) {
-      msg = e.message;
-    } else if (typeof e === 'string') {
-      msg = e;
-    } else {
-      try { msg = JSON.stringify(e) } catch { msg = String(e) }
-    }
-    const fullMsg = '请求失败：' + msg;
-    showStatus(fullMsg, 'error');
-    console.error('Generation error:', e);
-    console.error('Full error details:', { message: msg, error: e, stack: e.stack });
-  }
-  setLoading(false);
+async function runGenerate(){
+  const key=document.getElementById('apiKey').value.trim();
+  const prompt=document.getElementById('generatePrompt').value.trim();
+  const quality=document.getElementById('qualitySelect').value;
+  const format=document.getElementById('formatSelect').value;
+  if(!key){setStatus('generateStatus','请输入 API Key','error');return}
+  if(!prompt){setStatus('generateStatus','请输入提示词','error');return}
+  setGenerateLoading(true);clearStatus('generateStatus');
+  const historyItem=historyRecordBase({type:'generate',mode:'text',prompt,size:state.selectedSize,quality,format,count:state.selectedCount});
+  try{
+    const body={prompt,model:'gpt-image-2',size:state.selectedSize,quality,response_format:'b64_json',n:state.selectedCount,output_format:format};
+    const resp=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(body)});
+    const startJson=await resp.json();
+    if(!resp.ok)throw new Error(startJson.error||('HTTP '+resp.status));
+    const active={...historyItem,serverTaskId:startJson.taskId,status:'submitted',updatedAt:Date.now()};
+    setActiveTask(active);
+    upsertHistory(active);
+    state.selectedTaskId=active.id;
+    renderTaskList();
+    renderTaskDetail(active.id);
+    setStatus('generateStatus','任务已提交，正在生成...','info');
+    const json=await waitForTask(active);
+    const items=(json.data||[]).map((item,idx)=>({index:idx,mime:format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png',dataUrl:item.b64_json?`data:${format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png'};base64,${item.b64_json}`:item.url,url:item.url||null}));
+    const doneItem={...active,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-active.createdAt,result:{count:items.length,items},error:null};
+    setActiveTask(null);
+    upsertHistory(doneItem);
+    renderGenerateResults(doneItem);
+    renderTaskDetail(doneItem.id);
+    setStatus('generateStatus','生成成功！共 '+items.length+' 张，耗时 '+Math.round(doneItem.durationMs/1000)+'s','success');
+    fetchQuota(key);
+  }catch(e){
+    const msg=e?.message?e.message:(typeof e==='string'?e:(state.settings.debugErrors?JSON.stringify(e):'生成失败'));
+    const failed={...historyItem,status:'error',updatedAt:Date.now(),completedAt:Date.now(),error:msg};
+    if(state.activeTask&&state.activeTask.id===historyItem.id)setActiveTask(null);
+    upsertHistory(failed);
+    state.selectedTaskId=failed.id;
+    renderTaskList();
+    renderTaskDetail(failed.id);
+    setStatus('generateStatus','请求失败：'+msg,'error');
+    console.error('Generation error:',e);
+  }finally{setGenerateLoading(false)}
 }
 
-function displayResults(data, format) {
-  const c = document.getElementById('results');
-  const e = document.getElementById('emptyState');
-  if (e) e.remove();
-  c.querySelectorAll('.result-card').forEach(x => x.remove());
+async function runEdit(){
+  const key=document.getElementById('apiKey').value.trim();
+  const prompt=document.getElementById('editPrompt').value.trim();
+  const size=document.getElementById('editSizeSelect').value;
+  const quality=document.getElementById('editQualitySelect').value;
+  if(!key){setStatus('editStatus','请输入 API Key','error');return}
+  if(!state.uploadedFile){setStatus('editStatus','请上传参考图','error');return}
+  if(!prompt){setStatus('editStatus','请输入编辑提示词','error');return}
+  setEditLoading(true);clearStatus('editStatus');
+  const historyItem=historyRecordBase({type:'edit',mode:'img',prompt,size,quality,format:'png',count:1,referenceMeta:{name:state.uploadedFile.name,size:state.uploadedFile.size,type:state.uploadedFile.type}});
+  try{
+    const fd=new FormData();
+    fd.append('prompt',prompt);
+    fd.append('image',state.uploadedFile);
+    fd.append('model','gpt-image-2');
+    fd.append('size',size);
+    fd.append('quality',quality);
+    fd.append('response_format','b64_json');
+    const resp=await fetch('/api/edit',{method:'POST',headers:{'X-API-Key':key},body:fd});
+    const json=await resp.json();
+    if(!resp.ok)throw new Error(json.error||('HTTP '+resp.status));
+    const items=(json.data||[]).map((item,idx)=>({index:idx,mime:'image/png',dataUrl:item.b64_json?`data:image/png;base64,${item.b64_json}`:item.url,url:item.url||null}));
+    if(!items.length)throw new Error('API 返回空数据');
+    const doneItem={...historyItem,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-historyItem.createdAt,result:{count:items.length,items},error:null};
+    upsertHistory(doneItem);
+    state.selectedTaskId=doneItem.id;
+    renderEditResults(doneItem);
+    renderTaskDetail(doneItem.id);
+    setStatus('editStatus','编辑成功！','success');
+    fetchQuota(key);
+  }catch(e){
+    const msg=e?.message?e.message:(typeof e==='string'?e:(state.settings.debugErrors?JSON.stringify(e):'编辑失败'));
+    const failed={...historyItem,status:'error',updatedAt:Date.now(),completedAt:Date.now(),error:msg};
+    upsertHistory(failed);
+    state.selectedTaskId=failed.id;
+    renderTaskDetail(failed.id);
+    setStatus('editStatus','请求失败：'+msg,'error');
+    console.error('Edit error:',e);
+  }finally{setEditLoading(false)}
+}
 
-  const grid = document.createElement('div');
-  grid.className = 'result-grid';
-  data.forEach((item, idx) => {
-    const card = document.createElement('div');
-    card.className = 'result-card';
-    const img = document.createElement('img');
-    if (item.b64_json) {
-      const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
-      img.src = 'data:' + mime + ';base64,' + item.b64_json;
-    } else if (item.url) {
-      img.src = item.url;
-    }
-    const acts = document.createElement('div');
-    acts.className = 'result-actions';
-    const dl = document.createElement('button');
-    dl.className = 'btn-sm';
-    dl.textContent = '下载';
-    dl.onclick = () => {
-      const a = document.createElement('a');
-      a.href = img.src;
-      a.download = 'gpt-image-' + Date.now() + '-' + idx + '.png';
-      a.click();
-    };
-    acts.appendChild(dl);
-    card.appendChild(img);
-    card.appendChild(acts);
-    grid.appendChild(card);
+async function restoreActiveTask(){
+  if(!state.activeTask||!state.activeTask.serverTaskId)return;
+  const active=state.activeTask;
+  try{
+    setGenerateLoading(true);
+    setStatus('generateStatus','恢复未完成任务中...','info');
+    const json=await waitForTask(active);
+    const format=active.request?.format||'png';
+    const items=(json.data||[]).map((item,idx)=>({index:idx,mime:format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png',dataUrl:item.b64_json?`data:${format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png'};base64,${item.b64_json}`:item.url,url:item.url||null}));
+    const doneItem={...active,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-active.createdAt,result:{count:items.length,items},error:null};
+    setActiveTask(null);
+    upsertHistory(doneItem);
+    renderGenerateResults(doneItem);
+    setStatus('generateStatus','已恢复并完成上一次任务','success');
+  }catch(e){
+    const msg=e?.message?e.message:'恢复任务失败';
+    const failed={...active,status:msg.includes('不存在')?'expired':'error',updatedAt:Date.now(),completedAt:Date.now(),error:msg};
+    setActiveTask(null);
+    upsertHistory(failed);
+    setStatus('generateStatus','恢复任务失败：'+msg,'error');
+  }finally{setGenerateLoading(false)}
+}
+
+function handleFile(file){
+  if(!file.type.startsWith('image/')){setStatus('editStatus','请上传图片文件','error');return}
+  state.uploadedFile=file;
+  const url=URL.createObjectURL(file);
+  document.getElementById('previewImg').src=url;
+  document.getElementById('previewWrap').classList.remove('hidden');
+  document.getElementById('uploadText').classList.add('hidden');
+}
+function clearFile(){state.uploadedFile=null;document.getElementById('imageInput').value='';document.getElementById('previewWrap').classList.add('hidden');document.getElementById('uploadText').classList.remove('hidden')}
+
+function bindEvents(){
+  document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
+  document.getElementById('newTaskBtn').addEventListener('click',()=>switchPage('generate'));
+  document.getElementById('generateBtn').addEventListener('click',runGenerate);
+  document.getElementById('editBtn').addEventListener('click',runEdit);
+  document.getElementById('apiKey').addEventListener('change',e=>{localStorage.setItem(STORAGE_KEYS.key,e.target.value.trim());syncCredentialViews();fetchQuota(e.target.value.trim())});
+  document.getElementById('apiKey').addEventListener('input',e=>{document.getElementById('credentialInput').value=e.target.value;syncCredentialViews()});
+  document.getElementById('credentialInput').addEventListener('input',e=>{document.getElementById('apiKey').value=e.target.value;syncCredentialViews()});
+  document.getElementById('saveCredentialBtn').addEventListener('click',()=>{const key=document.getElementById('credentialInput').value.trim();document.getElementById('apiKey').value=key;localStorage.setItem(STORAGE_KEYS.key,key);syncCredentialViews();fetchQuota(key);setStatus('credentialStatus','已保存到本地浏览器。','success')});
+  document.getElementById('testCredentialBtn').addEventListener('click',async()=>{const key=document.getElementById('credentialInput').value.trim();if(!key){setStatus('credentialStatus','请先输入 API Key','error');return}setStatus('credentialStatus','测试连接中...','info');try{const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));setStatus('credentialStatus','连接成功，剩余额度：'+(j.remaining===-1?'∞':j.remaining),'success')}catch(e){setStatus('credentialStatus','连接失败：'+(e.message||e),'error')}});
+  document.getElementById('clearCredentialBtn').addEventListener('click',()=>{localStorage.removeItem(STORAGE_KEYS.key);document.getElementById('apiKey').value='';document.getElementById('credentialInput').value='';document.getElementById('quotaText').textContent='—';syncCredentialViews();setStatus('credentialStatus','已清空本地凭证。','info')});
+  document.getElementById('debugErrorsToggle').addEventListener('change',e=>{state.settings.debugErrors=e.target.checked;persistSettings()});
+  document.getElementById('historyLimitSelect').addEventListener('change',e=>{state.settings.historyLimit=Number(e.target.value)||20;persistSettings();persistHistory();renderTaskList();if(state.selectedTaskId)renderTaskDetail(state.selectedTaskId)});
+  document.getElementById('clearHistoryBtn').addEventListener('click',clearAllHistory);
+  document.querySelectorAll('.preset-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.preset-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedSize=btn.dataset.size}));
+  document.querySelectorAll('.count-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.count-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedCount=Number(btn.dataset.count)||1}));
+  document.querySelectorAll('#quickPromptChips .chip').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('generatePrompt').value=btn.dataset.prompt;document.getElementById('generateCounter').textContent=document.getElementById('generatePrompt').value.length+' / 4000'}));
+  document.getElementById('generatePrompt').addEventListener('input',e=>{document.getElementById('generateCounter').textContent=e.target.value.length+' / 4000'});
+  document.getElementById('removeImageBtn').addEventListener('click',e=>{e.preventDefault();clearFile()});
+  const uploadZone=document.getElementById('uploadZone');
+  const imageInput=document.getElementById('imageInput');
+  uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
+  uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
+  uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');const file=e.dataTransfer.files[0];if(file)handleFile(file)});
+  imageInput.addEventListener('change',()=>{if(imageInput.files[0])handleFile(imageInput.files[0])});
+  document.addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&['1','2','3','4','5'].includes(e.key)){e.preventDefault();switchPage(['generate','edit','tasks','credentials','settings'][Number(e.key)-1])}
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&state.currentPage==='generate'){e.preventDefault();runGenerate()}
   });
-  c.appendChild(grid);
 }
 
-document.addEventListener('keydown', e => {
-  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault();
-    generate();
+function init(){
+  loadSettings();
+  bindEvents();
+  loadHistory();
+  loadActiveTask();
+  const savedKey=localStorage.getItem(STORAGE_KEYS.key)||'';
+  document.getElementById('apiKey').value=savedKey;
+  document.getElementById('credentialInput').value=savedKey;
+  syncCredentialViews();
+  if(savedKey)fetchQuota(savedKey);
+  if(state.history.length){
+    const latest=state.history.find(x=>x.status==='done');
+    if(latest){
+      state.selectedTaskId=latest.id;
+      renderGenerateResults(latest.type==='generate'?latest:null);
+      if(latest.type==='edit')renderEditResults(latest);
+    }
   }
-});
+  renderTaskList();
+  if(state.selectedTaskId)renderTaskDetail(state.selectedTaskId);
+  if(state.activeTask){
+    state.selectedTaskId=state.activeTask.id;
+    renderTaskList();
+    renderTaskDetail(state.activeTask.id);
+    restoreActiveTask();
+  }
+}
+
+document.addEventListener('DOMContentLoaded',init);
 </script>
 </body>
 </html>
