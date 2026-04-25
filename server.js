@@ -153,7 +153,17 @@ function scheduleKeyBackup() {
   backupTimer = setTimeout(() => updateGitHubKeyBackup().catch(err => console.error('GitHub key backup failed:', err)), 2000);
 }
 
+function startPeriodicKeyBackup() {
+  if (!GITHUB_TOKEN) {
+    console.log('GitHub key backup disabled: GITHUB_TOKEN is not set');
+    return;
+  }
+  setTimeout(() => scheduleKeyBackup(), 10000);
+  setInterval(() => scheduleKeyBackup(), 5 * 60 * 1000);
+}
+
 restoreKeysFromBackupFile();
+startPeriodicKeyBackup();
 
 // --- Middleware ---
 app.use(express.json({ limit: '10mb' }));
