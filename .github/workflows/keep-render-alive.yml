@@ -1,0 +1,17 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render app
+        run: |
+          curl --fail --silent --show-error \
+            --max-time 30 \
+            --retry 2 \
+            "https://gpt-image-server-xhnm.onrender.com/" > /dev/null
