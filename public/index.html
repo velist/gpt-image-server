@@ -297,7 +297,12 @@ async function waitForTask(taskId){
     const r=await fetch('/api/tasks/'+encodeURIComponent(taskId));
     const t=await r.json();
     if(!r.ok)throw new Error(t.error||('HTTP '+r.status));
-    if(t.status==='done')return t.result;
+    if(t.status==='done'){
+      const rr=await fetch(t.resultUrl);
+      const result=await rr.json();
+      if(!rr.ok)throw new Error(result.error||('HTTP '+rr.status));
+      return result;
+    }
     if(t.status==='error')throw new Error(t.error||'生成失败');
     const elapsed=((performance.now()-_t0)/1000).toFixed(0);
     showStatus('正在生成... '+elapsed+'s','info');

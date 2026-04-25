@@ -272,7 +272,15 @@ app.post('/api/generate', async (req, res) => {
 app.get('/api/tasks/:id', (req, res) => {
   const task = tasks.get(req.params.id);
   if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
-  res.json(task);
+  if (task.status === 'done') return res.json({ status: 'done', resultUrl: `/api/tasks/${req.params.id}/result` });
+  res.json({ status: task.status, error: task.error, createdAt: task.createdAt });
+});
+
+app.get('/api/tasks/:id/result', (req, res) => {
+  const task = tasks.get(req.params.id);
+  if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
+  if (task.status !== 'done') return res.status(409).json({ error: '任务尚未完成' });
+  res.json(task.result);
 });
 
 // --- User API: Edit ---
