@@ -2,16 +2,21 @@ name: Keep Render Alive
 
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Render app
+      - name: Ping Render app (3 times with delay)
         run: |
-          curl --fail --silent --show-error \
-            --max-time 30 \
-            --retry 2 \
-            "https://gpt-image-server-xhnm.onrender.com/" > /dev/null
+          for i in 1 2 3; do
+            echo "=== Ping #$i ==="
+            curl --fail --silent --show-error \
+              --max-time 60 \
+              --retry 3 \
+              --retry-delay 5 \
+              "https://gpt-image-server-xhnm.onrender.com/" > /dev/null && break
+            sleep 10
+          done
