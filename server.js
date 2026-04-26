@@ -200,14 +200,37 @@ const finishGenerateTaskSuccess = db.transaction((taskId, keyId, resultJson) => 
     .run(now, keyId);
 });
 
-function requireGitHubBackupConfig() {
-  if (!GITHUB_TOKEN) throw new Error('GITHUB_TOKEN 未配置');
-  if (!GITHUB_REPO) throw new Error('GITHUB_REPO 未配置');
-  if (!GITHUB_BRANCH) throw new Error('GITHUB_BRANCH 未配置');
+let gitHubTokenValid = false;
+
+async function verifyGitHubToken() {
+  if (!GITHUB_TOKEN) {
+    console.log('[KEY BACKUP] GITHUB_TOKEN 未配置 — Key 备份已禁用');
+    return false;
+  }
+  try {
+    const res = await fetch('https://api.github.com/user', {
+      headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github+json', 'User-Agent': 'gpt-image-server' }
+    });
+    if (res.ok) {
+      console.log('[KEY BACKUP] GitHub Token 有效，备份功能正常');
+      return true;
+    }
+    if (res.status === 401) {
+      console.error('[KEY BACKUP] GITHUB_TOKEN 已失效 (Bad credentials)！请到 GitHub 生成新的 Personal Access Token 并更新 Render 环境变量！');
+      return false;
+    }
+    console.error(`[KEY BACKUP] GitHub Token 验证异常: HTTP ${res.status}`);
+    return false;
+  } catch (err) {
+    console.error('[KEY BACKUP] GitHub Token 验证网络失败:', err.message);
+    return false;
+  }
 }
 
 function writeLocalKeyBackup(content) {
-  fs.writeFileSync(path.join(__dirname, KEY_BACKUP_PATH), content, 'utf8');
+  const backupPath = path.join(__dirname, KEY_BACKUP_PATH);
+  fs.writeFileSync(backupPath, content, 'utf8');
+  console.log(`[KEY BACKUP] \u672c\u5730\u5907\u4efd\u5df2\u66f4\u65b0: ${backupPath} (${content.length} bytes)`);
 }
 
 function replaceKeysFromBackup(items) {
@@ -222,7 +245,7 @@ function replaceKeysFromBackup(items) {
 }
 
 async function fetchGitHubKeyBackup() {
-  requireGitHubBackupConfig();
+  if (!GITHUB_TOKEN || !gitHubTokenValid) return null;
   const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}?ref=${encodeURIComponent(GITHUB_BRANCH)}`;
   const res = await fetch(url, {
     headers: {
@@ -232,10 +255,11 @@ async function fetchGitHubKeyBackup() {
     }
   });
   if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`GitHub 读取备份失败: HTTP ${res.status} ${await res.text()}`);
+  if (res.status === 401) { gitHubTokenValid = false; console.error('[KEY BACKUP] GITHUB_TOKEN 已失效！'); return null; }
+  if (!res.ok) throw new Error(`GitHub \u8bfb\u53d6\u5907\u4efd\u5931\u8d25: HTTP ${res.status} ${await res.text()}`);
   const data = await res.json();
-  const content = Buffer.from((data.content || '').replace(/\n/g, ''), 'base64').toString('utf8');
-  return { sha: data.sha, content, keys: JSON.parse(content) };
+  const fileContent = Buffer.from((data.content || '').replace(/\n/g, ''), 'base64').toString('utf8');
+  return { sha: data.sha, content: fileContent, keys: JSON.parse(fileContent) };
 }
 
 async function restoreKeysFromBackupFile() {
@@ -258,26 +282,43 @@ async function restoreKeysFromBackupFile() {
 }
 
 async function updateGitHubKeyBackup() {
-  requireGitHubBackupConfig();
-  const content = JSON.stringify(allKeysJSON(), null, 2);
-  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
-  const headers = {
-    'Authorization': `Bearer ${GITHUB_TOKEN}`,
-    'Accept': 'application/vnd.github+json',
-    'User-Agent': 'gpt-image-server'
-  };
-  let sha;
-  const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
-  if (current.ok) sha = (await current.json()).sha;
-  else if (current.status !== 404) throw new Error(`GitHub 读取当前备份失败: HTTP ${current.status} ${await current.text()}`);
-  const res = await fetch(url, {
-    method: 'PUT',
-    headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(content).toString('base64'), sha })
-  });
-  if (!res.ok) throw new Error(`GitHub key backup failed: HTTP ${res.status} ${await res.text()}`);
-  writeLocalKeyBackup(content);
-  return true;
+  const keyContent = JSON.stringify(allKeysJSON(), null, 2);
+  // Always save local backup first
+  writeLocalKeyBackup(keyContent);
+
+  if (!GITHUB_TOKEN || !gitHubTokenValid) {
+    console.warn('[KEY BACKUP] GitHub 不可用，仅保存了本地备份。重启/重新部署后可能丢失！');
+    return false;
+  }
+
+  try {
+    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
+    const headers = {
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'Accept': 'application/vnd.github+json',
+      'User-Agent': 'gpt-image-server'
+    };
+    let sha;
+    const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
+    if (current.ok) sha = (await current.json()).sha;
+    else if (current.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
+    else if (current.status !== 404) throw new Error(`GitHub 读取当前备份失败: HTTP ${current.status}`);
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(keyContent).toString('base64'), sha })
+    });
+    if (!res.ok) {
+      if (res.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
+      throw new Error(`GitHub 写入备份失败: HTTP ${res.status}`);
+    }
+    console.log('[KEY BACKUP] GitHub 备份成功');
+    return true;
+  } catch (err) {
+    console.error('[KEY BACKUP] GitHub 同步失败:', err.message);
+    console.error('[KEY BACKUP] Key 数据仅保存在本地，重新部署后会丢失！');
+    return false;
+  }
 }
 
 async function persistKeysToGitHub() {
@@ -301,6 +342,7 @@ function startPeriodicKeyBackup() {
 }
 
 (async () => {
+  gitHubTokenValid = await verifyGitHubToken();
   await restoreKeysFromBackupFile();
   startPeriodicKeyBackup();
   startTaskCleanupLoop();
@@ -604,6 +646,36 @@ app.delete('/api/admin/keys/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     res.status(502).json({ error: e.message || 'GitHub 持久化失败' });
+  }
+});
+
+
+// --- Admin API: Export Keys (backup) ---
+app.get('/api/admin/keys/export', (req, res) => {
+  const exportData = {
+    exportedAt: new Date().toISOString(),
+    keys: allKeysJSON()
+  };
+  res.setHeader('Content-Disposition', 'attachment; filename="keys-backup-' + new Date().toISOString().slice(0,10) + '.json"');
+  res.json(exportData);
+});
+
+// --- Admin API: Import Keys (restore) ---
+app.post('/api/admin/keys/import', (req, res) => {
+  try {
+    const { keys } = req.body;
+    if (!Array.isArray(keys) || !keys.length) return res.status(400).json({ error: '缺少 keys 数组' });
+    let imported = 0, skipped = 0;
+    const stmt = db.prepare('INSERT OR IGNORE INTO keys (id, key, name, max_images, used_images, expires_at, created_at, enabled, last_used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    for (const k of keys) {
+      if (!k.key || !/^sk-gi-[a-f0-9]{48}$/.test(k.key)) { skipped++; continue; }
+      const r = stmt.run(k.id || uuidv4(), k.key, k.name || '', k.maxImages ?? -1, k.usedImages || 0, k.expiresAt || null, k.createdAt || new Date().toISOString(), k.enabled === false ? 0 : 1, k.lastUsedAt || null);
+      if (r.changes) imported++; else skipped++;
+    }
+    persistKeysToGitHub().catch(err => console.error('[KEY BACKUP] 导入后同步GitHub失败:', err.message));
+    res.json({ imported, skipped, total: imported + skipped });
+  } catch (e) {
+    res.status(502).json({ error: e.message || '导入失败' });
   }
 });
 
