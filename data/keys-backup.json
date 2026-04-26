@@ -16,12 +16,12 @@
     "key": "sk-gi-123f9efdb5585e057e6f85e8a53b170cedbf9eace13cca69",
     "name": "弗",
     "maxImages": 5,
-    "usedImages": 0,
-    "remaining": 5,
+    "usedImages": 1,
+    "remaining": 4,
     "expiresAt": null,
     "createdAt": "2026-04-26 12:40:08",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-04-26T15:13:03.371Z"
   },
   {
     "id": "d5724f0f-08c0-4de1-b296-4bc5544e3dba",
