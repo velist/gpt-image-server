@@ -408,13 +408,17 @@ async function runGenerateTask(taskId, keyId, body) {
     .run(now, now, taskId);
 
   try {
+    console.log(`[GENERATE] task=${taskId} n=${body.n||1} size=${body.size||'default'} model=${body.model||'default'}`);
     const result = await proxyRequest('/images/generations', 'POST', {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
     }, JSON.stringify(body));
 
     if (result.status === 200) {
-      finishGenerateTaskSuccess(taskId, keyId, result.body.toString('utf8'));
+      const responseBody = result.body.toString('utf8');
+      const parsed = JSON.parse(responseBody);
+      console.log(`[GENERATE] task=${taskId} success, upstream returned ${(parsed.data||[]).length} images`);
+      finishGenerateTaskSuccess(taskId, keyId, responseBody);
       await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
     } else {
       let errorMessage = '';
