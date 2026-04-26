@@ -686,14 +686,30 @@ function historyRecordBase({type,mode,prompt,size,quality,format,count,reference
 }
 
 async function waitForTask(task){
+  let netFails=0;
   for(let i=0;i<180;i++){
     await new Promise(r=>setTimeout(r,2000));
-    const r=await fetch('/api/tasks/'+encodeURIComponent(task.serverTaskId));
-    const t=await r.json();
+    let r,t;
+    try{
+      r=await fetch('/api/tasks/'+encodeURIComponent(task.serverTaskId));
+      t=await r.json();
+    }catch(e){
+      netFails++;
+      if(netFails>=5)throw new Error('网络连接失败，请检查网络后刷新页面重试');
+      setStatus('generateStatus','网络波动，重试中... ('+netFails+'/5)','info');
+      i--; // don't count this iteration
+      continue;
+    }
+    netFails=0;
     if(!r.ok)throw new Error(t.error||('HTTP '+r.status));
     if(t.status==='done'){
-      const rr=await fetch(t.resultUrl);
-      const result=await rr.json();
+      let rr,result;
+      try{
+        rr=await fetch(t.resultUrl);
+        result=await rr.json();
+      }catch(e){
+        throw new Error('获取结果失败，请刷新页面查看任务列表');
+      }
       if(!rr.ok)throw new Error(result.error||('HTTP '+rr.status));
       return result;
     }
