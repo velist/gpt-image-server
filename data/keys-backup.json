@@ -1,5 +1,17 @@
 [
   {
+    "id": "d5724f0f-08c0-4de1-b296-4bc5544e3dba",
+    "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
+    "name": "我",
+    "maxImages": 999,
+    "usedImages": 0,
+    "remaining": 999,
+    "expiresAt": null,
+    "createdAt": "2026-04-26 01:29:12",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
     "key": "sk-gi-0004d1b26c62033f9b5a6c18c13f04bc9b6319b19866ff99",
     "name": "钊曼",
