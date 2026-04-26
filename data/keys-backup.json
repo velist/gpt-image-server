@@ -1,5 +1,17 @@
 [
   {
+    "id": "370f4add-8afb-4d55-8bea-83af63711e5e",
+    "key": "sk-gi-f11241979d30b608de4adc265d1293df19c4e088047c04f8",
+    "name": "沐",
+    "maxImages": 5,
+    "usedImages": 0,
+    "remaining": 5,
+    "expiresAt": null,
+    "createdAt": "2026-04-26 23:44:30",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "d680aac1-b902-4a41-83c4-6d90cea0e47c",
     "key": "sk-gi-fb809a020fc7e78cc8335053a6ac6b4e5ead00285b9180fb",
     "name": "张三",
