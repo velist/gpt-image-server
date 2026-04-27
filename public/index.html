@@ -661,15 +661,39 @@ function renderTaskList(){
   });
 }
 
-function renderTaskDetail(id){
+async function renderTaskDetail(id){
   const panel=document.getElementById('taskDetailPanel');
   if(!id){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>选择一条任务查看详情、结果和失败原因。</p></div>';return}
   const item=state.history.find(x=>x.id===id);
   if(!item){panel.innerHTML='<div class="empty-state" style="min-height:560px"><div class="icon">🕘</div><p>任务不存在。</p></div>';return}
-  const mainImage=item.result?.items?.[0]?.dataUrl||item.result?.items?.[0]?.url||'';
-  const thumbs=item.result?.items?.length?`<div class="detail-grid">${item.result.items.map((img,idx)=>`<div class="detail-thumb"><img src="${img.dataUrl||img.url}" alt="result-${idx}"><div class="detail-actions"><button class="btn-sm" onclick="downloadUrl('${(img.dataUrl||img.url).replace(/'/g,"&#39;")}','task-${idx+1}.png')">下载</button></div></div>`).join('')}</div>`:'<div class="note">当前没有可展示的结果图片。</div>';
+
+  // If result data was stripped (base64 removed to save localStorage space), try to re-fetch from server
+  let items=item.result?.items||[];
+  const needsRefetch=item.status==='done'&&items.length>0&&items.some(x=>!x.dataUrl&&x.stored===false&&!x.url);
+  if(needsRefetch&&(item.serverTaskIds||item.serverTaskId)){
+    const taskIds=item.serverTaskIds||(item.serverTaskId?[item.serverTaskId]:[]);
+    const fetched=[];
+    for(const tid of taskIds){
+      try{
+        const rr=await fetch('/api/tasks/'+encodeURIComponent(tid)+'/result');
+        if(rr.ok){
+          const data=await rr.json();
+          const imgs=(data.data||[]).map((x,idx)=>({index:fetched.length+idx,mime:'image/png',dataUrl:x.b64_json?`data:image/png;base64,${x.b64_json}`:x.url,url:x.url||null}));
+          fetched.push(...imgs);
+        }
+      }catch{}
+    }
+    if(fetched.length){
+      items=fetched;
+      // Update the in-memory history item with fetched data
+      item.result={...item.result,items:fetched};
+    }
+  }
+
+  const mainImage=items[0]?.dataUrl||items[0]?.url||'';
+  const thumbs=items.length?`<div class="detail-grid">${items.map((img,idx)=>`<div class="detail-thumb"><img src="${img.dataUrl||img.url}" alt="result-${idx}"><div class="detail-actions"><button class="btn-sm" onclick="downloadUrl('${(img.dataUrl||img.url).replace(/'/g,"&#39;")}','task-${idx+1}.png')">下载</button></div></div>`).join('')}</div>`:'<div class="note">当前没有可展示的结果图片。</div>';
   const errorBlock=item.error?`<div class="status visible error">${escapeHtml(item.error)}</div>`:'';
-  panel.innerHTML=`<div class="detail-header"><div><h3 style="font-size:22px">任务详情</h3><div class="note" style="margin-top:8px">主体优先展示图片，右侧信息纵向排列。</div></div><button class="top-btn" id="deleteTaskBtn">删除记录</button></div><div class="detail-shell"><div class="detail-preview">${mainImage?`<img src="${mainImage}" alt="task-main-image">`:'<div class="empty-state" style="min-height:420px"><div class="icon">🖼️</div><p>当前没有可展示的图片。</p></div>'}${item.result?.items?.length>1?`<div style="margin-top:14px">${thumbs}</div>`:''}</div><div class="detail-sidebar"><div class="kv"><small>提示词</small><strong>${escapeHtml(item.request?.prompt||'')}</strong></div><div class="kv"><small>状态</small><strong>${escapeHtml(statusLabel(item.status))}</strong></div><div class="kv"><small>耗时</small><strong>${item.durationMs?Math.round(item.durationMs/1000)+'s':'—'}</strong></div><div class="kv"><small>任务时间</small><strong>${formatTime(item.completedAt||item.updatedAt||item.createdAt)}</strong></div><div class="kv"><small>模式 / 尺寸</small><strong>${item.mode==='img'?'图生图':'文生图'} · ${escapeHtml(item.request?.size||'—')}</strong></div>${errorBlock}${mainImage?`<button class="btn-sm" onclick="downloadUrl('${mainImage.replace(/'/g,"&#39;")}','task-main.png')">下载主图</button>`:''}</div></div>${item.result?.items?.length&&item.result.items.length<=1?'':!item.result?.items?.length?'': ''}`;
+  panel.innerHTML=`<div class="detail-header"><div><h3 style="font-size:22px">任务详情</h3><div class="note" style="margin-top:8px">主体优先展示图片，右侧信息纵向排列。</div></div><button class="top-btn" id="deleteTaskBtn">删除记录</button></div><div class="detail-shell"><div class="detail-preview">${mainImage?`<img src="${mainImage}" alt="task-main-image">`:'<div class="empty-state" style="min-height:420px"><div class="icon">🖼️</div><p>图片数据已清除以节省空间。<br>重新生成后可查看。</p></div>'}${items.length>1?`<div style="margin-top:14px">${thumbs}</div>`:''}</div><div class="detail-sidebar"><div class="kv"><small>提示词</small><strong>${escapeHtml(item.request?.prompt||'')}</strong></div><div class="kv"><small>状态</small><strong>${escapeHtml(statusLabel(item.status))}</strong></div><div class="kv"><small>耗时</small><strong>${item.durationMs?Math.round(item.durationMs/1000)+'s':'—'}</strong></div><div class="kv"><small>任务时间</small><strong>${formatTime(item.completedAt||item.updatedAt||item.createdAt)}</strong></div><div class="kv"><small>模式 / 尺寸</small><strong>${item.mode==='img'?'图生图':'文生图'} · ${escapeHtml(item.request?.size||'—')}</strong></div>${errorBlock}${mainImage?`<button class="btn-sm" onclick="downloadUrl('${mainImage.replace(/'/g,"&#39;")}','task-main.png')">下载主图</button>`:''}</div></div>${items.length&&items.length<=1?'':!items.length?'': ''}`;
   panel.querySelector('#deleteTaskBtn').onclick=()=>removeHistoryItem(item.id);
 }
 
@@ -832,7 +856,7 @@ async function runEdit(){
       allItems.push(...imgs);
     }
     if(!allItems.length)throw new Error('API 返回空数据');
-    const doneItem={...historyItem,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-historyItem.createdAt,result:{count:allItems.length,items:allItems},error:null};
+    const doneItem={...historyItem,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-historyItem.createdAt,serverTaskIds:taskIds,result:{count:allItems.length,items:allItems},error:null};
     setActiveTask(null);
     upsertHistory(doneItem);
     state.selectedTaskId=doneItem.id;
@@ -855,6 +879,9 @@ async function runEdit(){
 async function restoreActiveTask(){
   if(!state.activeTask)return;
   const active=state.activeTask;
+  // Skip restore if task is already done in history
+  const existing=state.history.find(x=>x.id===active.id);
+  if(existing&&existing.status==='done'){setActiveTask(null);return}
   // Support both old (serverTaskId) and new (serverTaskIds) format
   const taskIds=active.serverTaskIds||(active.serverTaskId?[active.serverTaskId]:null);
   if(!taskIds||!taskIds.length)return;
@@ -871,14 +898,15 @@ async function restoreActiveTask(){
     const doneItem={...active,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-active.createdAt,result:{count:allItems.length,items:allItems},error:null};
     setActiveTask(null);
     upsertHistory(doneItem);
-    renderGenerateResults(doneItem);
-    setStatus('generateStatus','已恢复并完成上一次任务','success');
+    if(active.type==='edit')renderEditResults(doneItem); else renderGenerateResults(doneItem);
+    setStatus(active.type==='edit'?'editStatus':'generateStatus','已恢复并完成上一次任务','success');
   }catch(e){
     const msg=e?.message?e.message:'恢复任务失败';
     const failed={...active,status:msg.includes('不存在')?'expired':'error',updatedAt:Date.now(),completedAt:Date.now(),error:msg};
     setActiveTask(null);
     upsertHistory(failed);
-    setStatus('generateStatus','恢复任务失败：'+msg,'error');
+    if(active.type==='edit')renderEditResults(failed); else renderGenerateResults(failed);
+    setStatus(active.type==='edit'?'editStatus':'generateStatus','恢复任务失败：'+msg,'error');
   }finally{setGenerateLoading(false)}
 }
 

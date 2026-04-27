@@ -482,6 +482,15 @@ app.get('/api/tasks/:id', (req, res) => {
   res.json(taskRowToStatusJSON(task));
 });
 
+app.get('/api/admin/tasks/by-key/:keyPrefix', (req, res) => {
+  const auth = authAdmin(req);
+  if (!auth) return res.status(401).json({ error: '未授权' });
+  const rows = db.prepare(
+    "SELECT gt.id, gt.status, gt.created_at, gt.completed_at, gt.result_json IS NOT NULL as has_result FROM generate_tasks gt JOIN keys k ON gt.key_id = k.id WHERE k.key LIKE ? ORDER BY gt.created_at DESC LIMIT 20"
+  ).all('%' + req.params.keyPrefix + '%');
+  res.json(rows);
+});
+
 app.get('/api/tasks/:id/result', (req, res) => {
   const task = getGenerateTask(req.params.id);
   if (!task) return res.status(404).json({ error: '任务不存在或已过期' });
