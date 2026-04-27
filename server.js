@@ -183,7 +183,13 @@ async function recoverPendingTasksOnStartup() {
   const rows = db.prepare("SELECT id, key_id, request_json FROM generate_tasks WHERE status IN ('queued','running') AND expires_at > ? ORDER BY created_at ASC").all(nowIso());
   for (const row of rows) {
     try {
-      if (row.request_json) runGenerateTask(row.id, row.key_id, JSON.parse(row.request_json));
+      const req = row.request_json ? JSON.parse(row.request_json) : null;
+      if (req && req.file_path && fs.existsSync(req.file_path)) {
+        // Edit task - launch via edit runner
+        runEditTask(row.id, row.key_id, req.file_path);
+      } else {
+        runGenerateTask(row.id, row.key_id, req || {});
+      }
     } catch (err) {
       const now = nowIso();
       db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
@@ -487,7 +493,90 @@ app.get('/api/tasks/:id/result', (req, res) => {
   }
 });
 
-// --- User API: Edit ---
+// --- User API: Edit (async task pool) ---
+async function runEditTask(taskId, keyId, filePath) {
+  const task = getGenerateTask(taskId);
+  if (!task) return;
+  const now = nowIso();
+  if (new Date(task.expires_at) <= new Date()) {
+    db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?")
+      .run(now, now, taskId);
+    try { fs.unlinkSync(filePath); } catch {}
+    return;
+  }
+
+  db.prepare("UPDATE generate_tasks SET status = 'running', error = NULL, updated_at = ?, started_at = COALESCE(started_at, ?), attempt_count = attempt_count + 1 WHERE id = ?")
+    .run(now, now, taskId);
+
+  let bodyBuf, boundary;
+  try {
+    const reqData = JSON.parse(task.request_json);
+    const imgBuffer = fs.readFileSync(filePath);
+    boundary = '----FormBoundary' + crypto.randomBytes(16).toString('hex');
+    const parts = [];
+
+    const addField = (name, value) => {
+      parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
+    };
+    const addFile = (name, filename, data, contentType) => {
+      const head = `--${boundary}\r\nContent-Disposition: form-data; name="${name}"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`;
+      parts.push(Buffer.concat([Buffer.from(head), data, Buffer.from('\r\n')]));
+    };
+
+    addField('model', reqData.model || 'gpt-image-2');
+    addField('prompt', reqData.prompt);
+    addFile('image', reqData.image_originalname || 'image.png', imgBuffer, reqData.image_mimetype || 'image/png');
+    if (reqData.size) addField('size', reqData.size);
+    if (reqData.quality) addField('quality', reqData.quality);
+    if (reqData.output_format) addField('output_format', reqData.output_format);
+    if (reqData.background) addField('background', reqData.background);
+    if (reqData.response_format) addField('response_format', reqData.response_format);
+    parts.push(Buffer.from(`--${boundary}--\r\n`));
+    bodyBuf = Buffer.concat(parts);
+  } catch (e) {
+    try { fs.unlinkSync(filePath); } catch {}
+    db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+      .run('读取临时文件失败: ' + e.message, now, now, now, taskId);
+    return;
+  }
+
+  try {
+    console.log(`[EDIT] task=${taskId} prompt=${(JSON.parse(task.request_json).prompt||'').slice(0,60)}`);
+    const result = await proxyRequest('/images/edits', 'POST', {
+      'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
+    }, bodyBuf);
+
+    if (result.status === 200) {
+      const responseBody = result.body.toString('utf8');
+      try {
+        const parsed = JSON.parse(responseBody);
+        console.log(`[EDIT] task=${taskId} success, upstream returned ${(parsed.data||[]).length} images`);
+      } catch {}
+      finishGenerateTaskSuccess(taskId, keyId, responseBody);
+      // finishGenerateTaskSuccess already bumps used_images, just need GitHub persist
+      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
+    } else {
+      let errorMessage = '';
+      try {
+        const errBody = JSON.parse(result.body.toString('utf8'));
+        errorMessage = typeof errBody.error === 'string' ? errBody.error : JSON.stringify(errBody.error || errBody);
+      } catch {
+        errorMessage = result.body.toString('utf8') || ('HTTP ' + result.status);
+      }
+      const failedAt = nowIso();
+      db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+        .run(errorMessage, failedAt, failedAt, failedAt, taskId);
+    }
+  } catch (e) {
+    const failedAt = nowIso();
+    db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
+      .run('上游请求失败: ' + e.message, failedAt, failedAt, failedAt, taskId);
+  } finally {
+    try { fs.unlinkSync(filePath); } catch {}
+  }
+}
+
 app.post('/api/edit', upload.single('image'), async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
@@ -498,60 +587,41 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: '缺少参考图片' });
   const prompt = req.body.prompt;
   if (!prompt) return res.status(400).json({ error: '缺少 prompt 参数' });
-  const sizeError = validateSize(req.body.size);
+  const isAutoSize = req.body.size === 'auto';
+  const sizeError = isAutoSize ? null : validateSize(req.body.size);
   if (sizeError) return res.status(400).json({ error: sizeError });
 
-  // Build multipart
-  const boundary = '----FormBoundary' + crypto.randomBytes(16).toString('hex');
-  const parts = [];
+  // Save image to disk for async processing
+  const taskId = crypto.randomBytes(16).toString('hex');
+  const filePath = path.join(__dirname, 'data', 'edit-' + taskId + '.bin');
+  fs.writeFileSync(filePath, req.file.buffer);
 
-  const addField = (name, value) => {
-    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
+  const requestData = {
+    prompt,
+    model: req.body.model || 'gpt-image-2',
+    size: isAutoSize ? '' : (req.body.size || ''),
+    quality: req.body.quality || '',
+    output_format: req.body.output_format || '',
+    background: req.body.background || '',
+    response_format: req.body.response_format || 'b64_json',
+    image_mimetype: req.file.mimetype,
+    image_originalname: req.file.originalname || 'image.png',
+    file_path: filePath
   };
-  const addFile = (name, filename, data, contentType) => {
-    const head = `--${boundary}\r\nContent-Disposition: form-data; name="${name}"; filename="${filename}"\r\nContent-Type: ${contentType}\r\n\r\n`;
-    parts.push(Buffer.concat([Buffer.from(head), data, Buffer.from('\r\n')]));
-  };
 
-  addField('model', req.body.model || 'gpt-image-2');
-  addField('prompt', prompt);
-  addFile('image', req.file.originalname || 'image.png', req.file.buffer, req.file.mimetype);
-  if (req.body.size) addField('size', req.body.size);
-  if (req.body.quality) addField('quality', req.body.quality);
-  if (req.body.output_format) addField('output_format', req.body.output_format);
-  if (req.body.background) addField('background', req.body.background);
-  if (req.body.response_format) addField('response_format', req.body.response_format);
+  // Insert task (reuse task infra, request_json carries edit params)
+  const now = nowIso();
+  const expiresAt = new Date(Date.now() + TASK_TTL_MS).toISOString();
+  db.prepare(`INSERT INTO generate_tasks (id, status, key_id, request_json, created_at, updated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    .run(taskId, 'queued', v.key.id, JSON.stringify(requestData), now, now, expiresAt);
 
-  // Handle mask file if present
-  if (req.body.mask_file) {
-    // mask sent as separate field - not standard, skip
-  }
+  // Launch async runner
+  runEditTask(taskId, v.key.id, filePath).catch(err => {
+    console.error('[EDIT] runner crashed:', err.message);
+    try { fs.unlinkSync(filePath); } catch {}
+  });
 
-  parts.push(Buffer.from(`--${boundary}--\r\n`));
-  const bodyBuf = Buffer.concat(parts);
-
-  try {
-    const result = await proxyRequest('/images/edits', 'POST', {
-      'Content-Type': `multipart/form-data; boundary=${boundary}`,
-      'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY),
-      'Content-Length': bodyBuf.length
-    }, bodyBuf);
-
-    if (result.status === 200) {
-      db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
-        .run(new Date().toISOString(), v.key.id);
-      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
-    }
-
-    res.status(result.status);
-    for (const [k, v2] of Object.entries(result.headers)) {
-      if (!['transfer-encoding', 'connection'].includes(k.toLowerCase()))
-        res.setHeader(k, v2);
-    }
-    res.send(result.body);
-  } catch (e) {
-    res.status(502).json({ error: '上游请求失败: ' + e.message });
-  }
+  res.status(202).json({ taskId });
 });
 
 // --- Admin API: Login ---

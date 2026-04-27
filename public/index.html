@@ -136,8 +136,14 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
 .upload-zone.dragover,.upload-zone:hover{border-color:var(--accent);background:var(--accent-faint)}
 .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .upload-zone strong{display:block;margin-bottom:4px;font-size:13px;font-weight:600}
-.preview-wrap{margin-top:12px;position:relative;display:inline-block;max-width:100%}
+.preview-wrap{margin-top:12px;position:relative}
 .preview-wrap img{max-width:100%;max-height:200px;border-radius:var(--r-md);display:block}
+.thumb-strip{display:flex;flex-wrap:wrap;gap:8px}
+.thumb-item{position:relative;width:72px;height:72px;border-radius:var(--r-sm);overflow:hidden;border:1px solid var(--n-300);flex-shrink:0}
+.thumb-item img{width:100%;height:100%;object-fit:cover;max-height:none}
+.thumb-remove{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:11px;line-height:18px;text-align:center;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center}
+.thumb-remove:hover{background:rgba(220,50,50,.85)}
+.card-title .note{font-size:12px;color:var(--text-muted);font-weight:400;margin-left:8px}
 .remove-btn{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border:none;border-radius:999px;background:var(--status-err);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
 .primary-wide{width:100%;height:36px;background:var(--n-900);border:1px solid var(--n-900);color:var(--text-inverted);border-radius:var(--r-md);font-size:13px;font-weight:500;transition:background-color .15s}
 .primary-wide:hover:not(:disabled){background:var(--n-700);border-color:var(--n-700)}
@@ -353,16 +359,16 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
           <div>
             <div class="card">
               <div class="card-body">
-                <div class="card-title"><h3>参考图</h3></div>
+                <div class="card-title"><h3>参考图</h3><span class="note" id="fileCountLabel">最多 10 张</span></div>
                 <div class="upload-zone" id="uploadZone">
-                  <input type="file" id="imageInput" accept="image/*">
+                  <input type="file" id="imageInput" accept="image/*" multiple>
                   <div id="uploadText">
                     <strong>点击或拖拽上传图片</strong>
-                    <span class="note">支持 PNG / JPG / WEBP</span>
+                    <span class="note">支持 PNG / JPG / WEBP · 最多 10 张</span>
                   </div>
                   <div class="preview-wrap hidden" id="previewWrap">
-                    <img id="previewImg" src="" alt="preview">
-                    <button class="remove-btn" id="removeImageBtn">✕</button>
+                    <div class="thumb-strip" id="thumbStrip"></div>
+                    <button class="remove-btn" id="removeImageBtn">清除全部</button>
                   </div>
                 </div>
                 <div class="field" style="margin-top:16px">
@@ -392,6 +398,7 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
                 <div class="field">
                   <label>尺寸</label>
                   <select id="editSizeSelect">
+                    <option value="auto">自动（参考图原始尺寸）</option>
                     <option value="1024x1024">1024x1024</option>
                     <option value="1536x1024">1536x1024</option>
                     <option value="1024x1536">1024x1536</option>
@@ -786,24 +793,47 @@ async function runEdit(){
   const size=document.getElementById('editSizeSelect').value;
   const quality=document.getElementById('editQualitySelect').value;
   if(!key){setStatus('editStatus','请输入 API Key','error');return}
-  if(!state.uploadedFile){setStatus('editStatus','请上传参考图','error');return}
+  if(!state.uploadedFiles||!state.uploadedFiles.length){setStatus('editStatus','请上传至少一张参考图','error');return}
   if(!prompt){setStatus('editStatus','请输入编辑提示词','error');return}
   setEditLoading(true);clearStatus('editStatus');
-  const historyItem=historyRecordBase({type:'edit',mode:'img',prompt,size,quality,format:'png',count:1,referenceMeta:{name:state.uploadedFile.name,size:state.uploadedFile.size,type:state.uploadedFile.type}});
+  const fileCount=state.uploadedFiles.length;
+  const refMeta=state.uploadedFiles.map(f=>({name:f.name,size:f.size,type:f.type}));
+  const historyItem=historyRecordBase({type:'edit',mode:'img',prompt,size,quality,format:'png',count:fileCount,referenceMeta:refMeta});
   try{
-    const fd=new FormData();
-    fd.append('prompt',prompt);
-    fd.append('image',state.uploadedFile);
-    fd.append('model','gpt-image-2');
-    fd.append('size',size);
-    fd.append('quality',quality);
-    fd.append('response_format','b64_json');
-    const resp=await fetch('/api/edit',{method:'POST',headers:{'X-API-Key':key},body:fd});
-    const json=await resp.json();
-    if(!resp.ok)throw new Error(json.error||('HTTP '+resp.status));
-    const items=(json.data||[]).map((item,idx)=>({index:idx,mime:'image/png',dataUrl:item.b64_json?`data:image/png;base64,${item.b64_json}`:item.url,url:item.url||null}));
-    if(!items.length)throw new Error('API 返回空数据');
-    const doneItem={...historyItem,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-historyItem.createdAt,result:{count:items.length,items},error:null};
+    const taskIds=[];
+    // Create one task per reference image
+    for(let i=0;i<fileCount;i++){
+      const f=state.uploadedFiles[i];
+      const fd=new FormData();
+      fd.append('prompt',prompt);
+      fd.append('image',f);
+      fd.append('model','gpt-image-2');
+      if(size!=='auto')fd.append('size',size);
+      fd.append('quality',quality);
+      fd.append('response_format','b64_json');
+      const resp=await fetch('/api/edit',{method:'POST',headers:{'X-API-Key':key},body:fd});
+      if(!resp.ok){
+        let errJson;
+        try{errJson=await resp.json()}catch{}{}
+        throw new Error((errJson&&errJson.error)||('HTTP '+resp.status));
+      }
+      const createJson=await resp.json();
+      taskIds.push(createJson.taskId);
+    }
+    // Poll all tasks with retry resilience
+    const taskRef={...historyItem,serverTaskId:taskIds[0],serverTaskIds:taskIds};
+    setActiveTask(taskRef);
+    setStatus('editStatus',`${fileCount} 个编辑任务已创建，处理中...`,'info');
+    const allItems=[];
+    for(let i=0;i<taskIds.length;i++){
+      const singleRef={...historyItem,serverTaskId:taskIds[i]};
+      const result=await waitForTask(singleRef);
+      const imgs=(result.data||[]).map((item,idx)=>({index:allItems.length+idx,mime:'image/png',dataUrl:item.b64_json?`data:image/png;base64,${item.b64_json}`:item.url,url:item.url||null}));
+      allItems.push(...imgs);
+    }
+    if(!allItems.length)throw new Error('API 返回空数据');
+    const doneItem={...historyItem,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-historyItem.createdAt,result:{count:allItems.length,items:allItems},error:null};
+    setActiveTask(null);
     upsertHistory(doneItem);
     state.selectedTaskId=doneItem.id;
     renderEditResults(doneItem);
@@ -811,6 +841,7 @@ async function runEdit(){
     setStatus('editStatus','编辑成功！','success');
     fetchQuota(key);
   }catch(e){
+    setActiveTask(null);
     const msg=e?.message?e.message:(typeof e==='string'?e:(state.settings.debugErrors?JSON.stringify(e):'编辑失败'));
     const failed={...historyItem,status:'error',updatedAt:Date.now(),completedAt:Date.now(),error:msg};
     upsertHistory(failed);
@@ -851,15 +882,61 @@ async function restoreActiveTask(){
   }finally{setGenerateLoading(false)}
 }
 
-function handleFile(file){
-  if(!file.type.startsWith('image/')){setStatus('editStatus','请上传图片文件','error');return}
-  state.uploadedFile=file;
-  const url=URL.createObjectURL(file);
-  document.getElementById('previewImg').src=url;
+function handleFiles(files){
+  const valid=[];
+  for(const f of files){
+    if(!f.type.startsWith('image/')){setStatus('editStatus','请只上传图片文件','error');return}
+    valid.push(f);
+  }
+  // Merge with existing files, dedup by name+size, cap at 10
+  const existing=state.uploadedFiles||[];
+  const map=new Map();
+  for(const f of [...existing,...valid]){
+    const key=f.name+'|'+f.size;
+    if(!map.has(key))map.set(key,f);
+  }
+  const merged=Array.from(map.values()).slice(0,10);
+  state.uploadedFiles=merged;
+  renderThumbnails(merged);
   document.getElementById('previewWrap').classList.remove('hidden');
   document.getElementById('uploadText').classList.add('hidden');
+  document.getElementById('fileCountLabel').textContent=merged.length+'/10 张';
 }
-function clearFile(){state.uploadedFile=null;document.getElementById('imageInput').value='';document.getElementById('previewWrap').classList.add('hidden');document.getElementById('uploadText').classList.remove('hidden')}
+
+function renderThumbnails(files){
+  const strip=document.getElementById('thumbStrip');
+  strip.innerHTML='';
+  for(const f of files){
+    const url=URL.createObjectURL(f);
+    const el=document.createElement('div');
+    el.className='thumb-item';
+    el.innerHTML=`<img src="${url}" alt="${f.name}"><button class="thumb-remove" data-name="${f.name}" data-size="${f.size}">✕</button>`;
+    strip.appendChild(el);
+  }
+  // Bind remove buttons
+  strip.querySelectorAll('.thumb-remove').forEach(btn=>{
+    btn.addEventListener('click',e=>{
+      e.stopPropagation();
+      const name=btn.dataset.name,size=btn.dataset.size;
+      state.uploadedFiles=state.uploadedFiles.filter(f=>!(f.name===name&&f.size===Number(size)));
+      renderThumbnails(state.uploadedFiles);
+      document.getElementById('fileCountLabel').textContent=state.uploadedFiles.length+'/10 张';
+      if(!state.uploadedFiles.length){
+        state.uploadedFiles=null;
+        document.getElementById('previewWrap').classList.add('hidden');
+        document.getElementById('uploadText').classList.remove('hidden');
+      }
+    });
+  });
+}
+
+function clearFiles(){
+  state.uploadedFiles=null;
+  document.getElementById('imageInput').value='';
+  document.getElementById('previewWrap').classList.add('hidden');
+  document.getElementById('uploadText').classList.remove('hidden');
+  document.getElementById('fileCountLabel').textContent='最多 10 张';
+}
 
 function bindEvents(){
   document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
@@ -886,13 +963,13 @@ function bindEvents(){
   document.querySelectorAll('.count-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.count-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedCount=Number(btn.dataset.count)||1}));
   document.querySelectorAll('#quickPromptChips .chip').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('generatePrompt').value=btn.dataset.prompt;document.getElementById('generateCounter').textContent=document.getElementById('generatePrompt').value.length+' / 4000'}));
   document.getElementById('generatePrompt').addEventListener('input',e=>{document.getElementById('generateCounter').textContent=e.target.value.length+' / 4000'});
-  document.getElementById('removeImageBtn').addEventListener('click',e=>{e.preventDefault();clearFile()});
+  document.getElementById('removeImageBtn').addEventListener('click',e=>{e.preventDefault();clearFiles()});
   const uploadZone=document.getElementById('uploadZone');
   const imageInput=document.getElementById('imageInput');
   uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('dragover')});
   uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('dragover'));
-  uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');const file=e.dataTransfer.files[0];if(file)handleFile(file)});
-  imageInput.addEventListener('change',()=>{if(imageInput.files[0])handleFile(imageInput.files[0])});
+  uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('dragover');const files=Array.from(e.dataTransfer.files);if(files.length)handleFiles(files)});
+  imageInput.addEventListener('change',()=>{if(imageInput.files.length)handleFiles(Array.from(imageInput.files))});
   document.addEventListener('keydown',e=>{
     if((e.ctrlKey||e.metaKey)&&['1','2','3','4','5'].includes(e.key)){e.preventDefault();switchPage(['generate','edit','tasks','credentials','settings'][Number(e.key)-1])}
     if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&state.currentPage==='generate'){e.preventDefault();runGenerate()}
