@@ -16,12 +16,12 @@
     "key": "sk-gi-fb809a020fc7e78cc8335053a6ac6b4e5ead00285b9180fb",
     "name": "张三",
     "maxImages": 5,
-    "usedImages": 0,
-    "remaining": 5,
+    "usedImages": 1,
+    "remaining": 4,
     "expiresAt": null,
     "createdAt": "2026-04-26 12:40:51",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-04-27T02:07:34.322Z"
   },
   {
     "id": "173113dd-d705-4c76-8d98-a02316890be3",
