@@ -796,7 +796,7 @@ async function runGenerate(){
     upsertHistory(doneItem);
     renderGenerateResults(doneItem);
     renderTaskDetail(doneItem.id);
-    setStatus('generateStatus','生成成功！共 '+items.length+' 张，耗时 '+Math.round(doneItem.durationMs/1000)+'s','success');
+    setStatus('generateStatus','生成成功！共 '+allItems.length+' 张，耗时 '+Math.round(doneItem.durationMs/1000)+'s','success');
     fetchQuota(key);
   }catch(e){
     const msg=e?.message?e.message:(typeof e==='string'?e:(state.settings.debugErrors?JSON.stringify(e):'生成失败'));
