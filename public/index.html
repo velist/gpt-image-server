@@ -767,15 +767,20 @@ async function runGenerate(){
   const historyItem=historyRecordBase({type:'generate',mode:'text',prompt,size:finalSize,quality,format,count:state.selectedCount});
   try{
     const count=state.selectedCount;
+    console.log('[DEBUG] runGenerate count=',count);
     const body={prompt,model:'gpt-image-2',size:finalSize,quality,response_format:'b64_json',n:1,output_format:format};
     // Send count parallel requests, each generating 1 image
     const taskIds=[];
     for(let i=0;i<count;i++){
-      const resp=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify({...body,prompt:prompt+(count>1?' ['+(i+1)+'/'+count+']':'')})});
+      const reqBody={...body,prompt:prompt+(count>1?' ['+(i+1)+'/'+count+']':'')};
+      console.log('[DEBUG] Creating task',i+1,'/',count,'body.prompt:',reqBody.prompt.slice(0,50));
+      const resp=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':key},body:JSON.stringify(reqBody)});
       const json=await resp.json();
+      console.log('[DEBUG] Task',i+1,'response:',resp.status,json.taskId||json.error);
       if(!resp.ok)throw new Error(json.error||('HTTP '+resp.status));
       taskIds.push(json.taskId);
     }
+    console.log('[DEBUG] All taskIds:',taskIds);
     const active={...historyItem,serverTaskIds:taskIds,status:'submitted',updatedAt:Date.now()};
     setActiveTask(active);
     upsertHistory(active);
@@ -786,12 +791,15 @@ async function runGenerate(){
     // Wait for all tasks in parallel
     const allItems=[];
     for(let i=0;i<taskIds.length;i++){
+      console.log('[DEBUG] Waiting for task',i,taskIds[i]);
       const json=await waitForTask({...active,serverTaskId:taskIds[i]});
+      console.log('[DEBUG] Task',i,'done, data count=',(json.data||[]).length);
       const imgs=(json.data||[]).map((item,idx)=>({index:allItems.length+idx,mime:format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png',dataUrl:item.b64_json?`data:${format==='jpeg'?'image/jpeg':format==='webp'?'image/webp':'image/png'};base64,${item.b64_json}`:item.url,url:item.url||null}));
       allItems.push(...imgs);
       setStatus('generateStatus','已完成 '+(i+1)+'/'+taskIds.length+'，正在生成... '+Math.round((Date.now()-active.createdAt)/1000)+'s','info');
     }
     const doneItem={...active,status:'done',updatedAt:Date.now(),completedAt:Date.now(),durationMs:Date.now()-active.createdAt,result:{count:allItems.length,items:allItems},error:null};
+    console.log('[DEBUG] All done. allItems count=',allItems.length,'result count set to',doneItem.result.count);
     setActiveTask(null);
     upsertHistory(doneItem);
     renderGenerateResults(doneItem);
