@@ -4,12 +4,12 @@
     "key": "sk-gi-72cc2a7eb3475bb216efb35ed64534d1fbf785bd0f8aa674",
     "name": "燕子",
     "maxImages": 10,
-    "usedImages": 2,
-    "remaining": 8,
+    "usedImages": 3,
+    "remaining": 7,
     "expiresAt": null,
     "createdAt": "2026-04-27 09:02:55",
     "enabled": true,
-    "lastUsedAt": "2026-04-28T01:40:14.334Z"
+    "lastUsedAt": "2026-04-28T01:40:14.589Z"
   },
   {
     "id": "cbadca8b-f5f6-4df5-8902-f226000b74ab",
@@ -76,12 +76,12 @@
     "key": "sk-gi-0004d1b26c62033f9b5a6c18c13f04bc9b6319b19866ff99",
     "name": "钊曼",
     "maxImages": 10,
-    "usedImages": 9,
-    "remaining": 1,
+    "usedImages": 10,
+    "remaining": 0,
     "expiresAt": null,
     "createdAt": "2026-04-25 01:25:11",
     "enabled": true,
-    "lastUsedAt": "2026-04-28T01:37:53.197Z"
+    "lastUsedAt": "2026-04-28T01:40:45.953Z"
   },
   {
     "id": "627abcfc-ab46-4cd3-a402-c814bbc6118e",
