@@ -4,12 +4,12 @@
     "key": "sk-gi-75dde56b94ea0ba86004ec010630d83bdf9a5764085e33cc",
     "name": "格子",
     "maxImages": 10,
-    "usedImages": 1,
-    "remaining": 9,
+    "usedImages": 2,
+    "remaining": 8,
     "expiresAt": null,
     "createdAt": "2026-04-28 02:44:21",
     "enabled": true,
-    "lastUsedAt": "2026-04-28T04:05:28.824Z"
+    "lastUsedAt": "2026-04-28T04:05:51.427Z"
   },
   {
     "id": "a86893bb-ebe4-4abe-a397-97fc654bb67c",
