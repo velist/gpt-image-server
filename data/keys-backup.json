@@ -3,9 +3,9 @@
     "id": "2a0ee0ed-71b8-4fea-be3c-7d7abae9e251",
     "key": "sk-gi-03b8f631de2509f7efd1efa6f3447d9a8724b3aacde6809c",
     "name": "Truman",
-    "maxImages": 250,
+    "maxImages": 100,
     "usedImages": 9,
-    "remaining": 241,
+    "remaining": 91,
     "expiresAt": null,
     "createdAt": "2026-04-29 07:49:57",
     "enabled": true,
@@ -100,12 +100,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 72,
-    "remaining": 927,
+    "usedImages": 75,
+    "remaining": 924,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-04-29T11:45:59.247Z"
+    "lastUsedAt": "2026-04-29T14:15:27.859Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
