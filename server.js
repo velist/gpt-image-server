@@ -807,6 +807,10 @@ app.get('/api/admin/stats', (req, res) => {
   res.json({ totalKeys: total, activeKeys: active, expiredKeys: expired, totalImages: totalUsed, todayImages: todayUsed });
 });
 
+app.get('/api/version', (req, res) => {
+  res.json({ version: '2026-04-29-admin-ui-github-persistence', commit: process.env.RENDER_GIT_COMMIT || null });
+});
+
 // --- User API: Key info ---
 app.get('/api/key-info', (req, res) => {
   const apiKey = req.headers['x-api-key'];
