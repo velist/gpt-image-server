@@ -1,5 +1,17 @@
 [
   {
+    "id": "2a0ee0ed-71b8-4fea-be3c-7d7abae9e251",
+    "key": "sk-gi-03b8f631de2509f7efd1efa6f3447d9a8724b3aacde6809c",
+    "name": "Truman",
+    "maxImages": 100,
+    "usedImages": 0,
+    "remaining": 100,
+    "expiresAt": null,
+    "createdAt": "2026-04-29 07:49:57",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "447dd05c-fbb2-4fbd-a939-3f122e376265",
     "key": "sk-gi-4f0fc2b44b7caa19f3de54c9be6fb9d17caf8f9dac43aa5b",
     "name": "苏",
