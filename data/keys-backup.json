@@ -1,23 +1,11 @@
 [
   {
-    "id": "63e5d510-ba32-4aae-86ed-0ed1f4d40a4b",
-    "key": "sk-gi-2c919592a94b6fbf032025054212c695ec366f865fcd803a",
-    "name": "GitHubȨ���־û�����",
-    "maxImages": 30,
-    "usedImages": 0,
-    "remaining": 30,
-    "expiresAt": null,
-    "createdAt": "2026-04-29 14:06:24",
-    "enabled": true,
-    "lastUsedAt": null
-  },
-  {
     "id": "2a0ee0ed-71b8-4fea-be3c-7d7abae9e251",
     "key": "sk-gi-03b8f631de2509f7efd1efa6f3447d9a8724b3aacde6809c",
     "name": "Truman",
-    "maxImages": 200,
+    "maxImages": 100,
     "usedImages": 9,
-    "remaining": 191,
+    "remaining": 91,
     "expiresAt": null,
     "createdAt": "2026-04-29 07:49:57",
     "enabled": true,
@@ -112,12 +100,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 72,
-    "remaining": 927,
+    "usedImages": 73,
+    "remaining": 926,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-04-29T11:45:59.247Z"
+    "lastUsedAt": "2026-04-29T13:55:32.282Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
