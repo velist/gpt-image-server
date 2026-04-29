@@ -3,150 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>GPT-Image-2 管理后台</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--panel:#12121a;--card:#1a1a28;--border:#2a2a3a;--text:#e0e0e8;--dim:#888899;--accent:#00d4ff;--accent2:#ff3366;--success:#00ff88;--warn:#ffaa00;--radius:8px}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-input,textarea,select,button{font-family:inherit;font-size:14px;color:var(--text);outline:none}
-input[type=text],input[type=password],input[type=number],input[type=datetime-local],textarea,select{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;width:100%;transition:border-color .2s}
-input:focus,textarea:focus,select:focus{border-color:var(--accent)}
-select{cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23888899'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
-button{cursor:pointer;border:none;border-radius:var(--radius);padding:10px 20px;font-weight:600;transition:all .2s}
-::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --n-0:#ffffff;
+  --n-25:#fafaf9;
+  --n-50:#f5f5f4;
+  --n-100:#ececeb;
+  --n-150:#e2e2e0;
+  --n-200:#d4d4d2;
+  --n-300:#b4b4b1;
+  --n-400:#8e8e8b;
+  --n-500:#6e6e6b;
+  --n-600:#4f4f4d;
+  --n-700:#35352f;
+  --n-800:#1f1f1b;
+  --n-900:#0d0d0c;
+  --bg:var(--n-25);
+  --bg-raised:#ffffff;
+  --bg-sunken:var(--n-50);
+  --bg-hover:var(--n-50);
+  --bg-pressed:var(--n-100);
+  --border:var(--n-150);
+  --border-strong:var(--n-200);
+  --text:var(--n-900);
+  --text-muted:var(--n-600);
+  --text-inverted:var(--n-0);
+  --accent:#0a6f49;
+  --accent-hover:#075d3d;
+  --accent-faint:#e7f3ed;
+  --accent-on:#ffffff;
+  --status-ok:#0d8b5c;
+  --status-ok-bg:#e7f3ed;
+  --status-err:#b42318;
+  --status-err-bg:#fde7e4;
+  --status-warn:#936300;
+  --status-warn-bg:#fdf4de;
+  --f-sans:"Inter",-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-sm:4px;
+  --r-md:6px;
+  --r-lg:10px;
+  --r-xl:14px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 2px 8px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+}
+html,body{height:100%}
+body{font-family:var(--f-sans);font-size:13.5px;line-height:1.5;color:var(--text);background:var(--n-100);-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+a{color:inherit;text-decoration:none}
 
-.header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--panel)}
-.header h1{font-size:20px;font-weight:700;color:var(--accent)}
-.header a{color:var(--dim);text-decoration:none;font-size:13px}
-.container{max-width:1100px;margin:0 auto;padding:24px}
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{height:48px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--bg);flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.brand-badge{width:28px;height:28px;border-radius:var(--r-md);background:var(--n-900);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--text-inverted)}
+.topbar h1{font-size:16px;font-weight:600;letter-spacing:-0.01em}
+.topbar .note{font-size:12px;color:var(--text-muted)}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.top-btn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;background:transparent;border:1px solid transparent;border-radius:var(--r-md);color:var(--text);font-size:13px;font-weight:500;white-space:nowrap;transition:background-color .15s,border-color .15s}
+.top-btn:hover{background:var(--bg-hover);border-color:var(--border-strong)}
+.content{padding:20px 24px;overflow:auto;flex:1;max-width:1200px;width:100%;margin:0 auto}
 
-/* Login */
-.login-box{max-width:360px;margin:100px auto;padding:32px;background:var(--card);border-radius:12px;border:1px solid var(--border)}
-.login-box h2{text-align:center;margin-bottom:24px;color:var(--accent)}
-.login-box .field{margin-bottom:16px}
-.login-box label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
-.login-box button{width:100%;padding:12px;background:var(--accent);color:#000;font-weight:700;border-radius:var(--radius)}
-.login-box button:hover{opacity:.9}
-.login-box .error{color:var(--accent2);font-size:13px;text-align:center;margin-top:8px}
+.card{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:var(--shadow-sm)}
+.card-body{padding:16px 20px}
+.card-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-title h3{font-size:13.5px;font-weight:600;color:var(--text)}
 
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
-.stat-card .value{font-size:28px;font-weight:700;color:var(--accent)}
-.stat-card .label{font-size:12px;color:var(--dim);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.stat-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--r-xl);padding:16px 20px;box-shadow:var(--shadow-sm)}
+.stat-card .value{font-size:26px;font-weight:700;color:var(--accent);line-height:1.2}
+.stat-card .label{font-size:12px;color:var(--text-muted);margin-top:4px}
 
-/* Toolbar */
-.toolbar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.btn-primary{background:var(--accent);color:#000}
-.btn-primary:hover{box-shadow:0 0 12px rgba(0,212,255,.3)}
-.btn-warn{background:var(--warn);color:#000}
-.btn-danger{background:var(--accent2);color:#fff}
-.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;background:var(--border);color:var(--text)}
-.btn-sm:hover{background:var(--accent);color:#000}
-.btn-sm.danger{color:var(--accent2);border:1px solid var(--accent2);background:transparent}
-.btn-sm.danger:hover{background:var(--accent2);color:#fff}
-.btn-sm.success{color:var(--success);border:1px solid var(--success);background:transparent}
+.toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.btn-primary{display:inline-flex;align-items:center;height:36px;padding:0 16px;background:var(--n-900);border:1px solid var(--n-900);color:var(--text-inverted);border-radius:var(--r-md);font-size:13px;font-weight:500;transition:background-color .15s}
+.btn-primary:hover{background:var(--n-700);border-color:var(--n-700)}
+.btn-warn{display:inline-flex;align-items:center;height:36px;padding:0 16px;background:var(--status-warn-bg);border:1px solid var(--status-warn);color:var(--status-warn);border-radius:var(--r-md);font-size:13px;font-weight:500;transition:background-color .15s}
+.btn-warn:hover{background:#f8e9c0}
+.search-input{height:36px;width:240px;background:var(--bg-sunken);border:1px solid var(--border);color:var(--text);border-radius:var(--r-md);padding:0 12px;font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s}
+.search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-faint)}
 
-/* Table */
-.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.table-wrap{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-sm)}
 table{width:100%;border-collapse:collapse}
-th{background:var(--panel);padding:12px;text-align:left;font-size:12px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
-td{padding:10px 12px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle}
-tr:hover td{background:rgba(0,212,255,.02)}
-.badge{display:inline-block;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.badge.active{background:rgba(0,255,136,.1);color:var(--success)}
-.badge.disabled{background:rgba(255,51,102,.1);color:var(--accent2)}
-.badge.expired{background:rgba(255,170,0,.1);color:var(--warn)}
-.key-text{font-family:monospace;font-size:12px;color:var(--accent);cursor:pointer;user-select:all}
-.copy-hint{font-size:10px;color:var(--dim);margin-left:4px}
+th{background:var(--bg-sunken);padding:10px 14px;text-align:left;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:12px 14px;border-top:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:first-child td{border-top:none}
+tr:hover td{background:var(--bg-sunken)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:var(--r-sm);font-size:11px;font-weight:600}
+.badge.active{background:var(--status-ok-bg);color:var(--status-ok)}
+.badge.disabled{background:var(--status-err-bg);color:var(--status-err)}
+.badge.expired{background:var(--status-warn-bg);color:var(--status-warn)}
+.key-text{font-family:var(--f-mono);font-size:12px;color:var(--accent);cursor:pointer;user-select:all}
+.copy-hint{font-size:10px;color:var(--text-muted);margin-left:6px}
 
-/* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.btn-sm{padding:5px 10px;font-size:12px;border-radius:var(--r-sm);font-weight:500;transition:background-color .15s,border-color .15s,color .15s;border:1px solid var(--border);background:var(--bg-raised);color:var(--text);height:28px;display:inline-flex;align-items:center}
+.btn-sm:hover{background:var(--bg-hover);border-color:var(--border-strong)}
+.btn-sm.primary{background:var(--n-900);border-color:var(--n-900);color:var(--text-inverted)}
+.btn-sm.primary:hover{background:var(--n-700);border-color:var(--n-700)}
+.btn-sm.success{color:var(--status-ok);border-color:var(--status-ok);background:transparent}
+.btn-sm.success:hover{background:var(--status-ok-bg)}
+.btn-sm.danger{color:var(--status-err);border-color:var(--status-err);background:transparent}
+.btn-sm.danger:hover{background:var(--status-err-bg)}
+
+.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--text-muted)}
+.pagination button{padding:6px 14px;font-size:12px;background:var(--bg-raised);color:var(--text);border:1px solid var(--border);border-radius:var(--r-md)}
+.pagination button:hover:not(:disabled){background:var(--bg-hover);border-color:var(--border-strong)}
+.pagination button:disabled{opacity:.35;cursor:not-allowed}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
 .modal-overlay.show{display:flex}
-.modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;width:90%;max-width:480px}
-.modal h3{margin-bottom:16px;color:var(--accent)}
-.modal .field{margin-bottom:12px}
-.modal .field label{display:block;font-size:12px;color:var(--dim);margin-bottom:4px}
-.modal .row{display:flex;gap:8px}
-.modal .row>*{flex:1}
-.modal-actions{display:flex;gap:8px;margin-top:20px;justify-content:flex-end}
-.modal .result-box{margin-top:16px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:12px;max-height:200px;overflow:auto;font-family:monospace;font-size:12px}
-.modal .result-box .key-line{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
-.modal .result-box .key-line span{color:var(--accent)}
+.modal{background:var(--bg-raised);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;width:90%;max-width:480px;box-shadow:var(--shadow-md)}
+.modal h3{margin-bottom:20px;font-size:16px;font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:12px;color:var(--text-muted);font-weight:500}
+.field input,.field select{width:100%;background:var(--bg-sunken);border:1px solid var(--border);color:var(--text);border-radius:var(--r-md);padding:8px 10px;font-size:13px;outline:none;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-faint)}
+select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%236e6e6b'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:32px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end;align-items:center}
+.modal-actions .reset-check{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer}
+.result-box{margin-top:16px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:var(--r-md);padding:12px;max-height:180px;overflow:auto;font-family:var(--f-mono);font-size:12px}
+.result-box .key-line{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.result-box .key-line span{color:var(--accent)}
 
-/* Pagination */
-.pagination{display:flex;justify-content:center;align-items:center;gap:8px;margin-top:16px;font-size:13px;color:var(--dim)}
-.pagination button{padding:6px 12px;font-size:12px;background:var(--card);color:var(--text);border:1px solid var(--border)}
-.pagination button:disabled{opacity:.3;cursor:not-allowed}
-.pagination span{color:var(--text)}
+.login-box{max-width:380px;margin:120px auto 0;padding:32px;background:var(--bg-raised);border-radius:var(--r-xl);border:1px solid var(--border);box-shadow:var(--shadow-md)}
+.login-box h2{text-align:center;margin-bottom:24px;font-size:18px;font-weight:600}
+.login-box .error{color:var(--status-err);font-size:13px;text-align:center;margin-top:12px}
 
-/* Responsive */
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--n-200);border-radius:3px}
+
 @media(max-width:768px){
   .stats{grid-template-columns:repeat(2,1fr)}
   .toolbar{flex-direction:column}
-  table{font-size:12px}
-  th,td{padding:8px}
+  th,td{padding:8px 10px}
+  .content{padding:12px}
 }
 </style>
 </head>
 <body>
-
-<div class="header">
-  <h1>GPT-Image-2 Admin</h1>
-  <div>
-    <a href="/">返回首页</a>
-    <button class="btn-sm" onclick="logout()" style="margin-left:12px" id="logoutBtn">退出登录</button>
-  </div>
-</div>
-
-<!-- Login -->
-<div class="container" id="loginPage">
-  <div class="login-box">
-    <h2>管理后台登录</h2>
-    <div class="field">
-      <label>管理员密码</label>
-      <input type="password" id="adminPwd" onkeydown="if(event.key==='Enter')doLogin()">
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="brand-badge">GI</div>
+      <div>
+        <h1>GPT Image 2 <span class="note">· 管理后台</span></h1>
+      </div>
     </div>
-    <button onclick="doLogin()">登录</button>
-    <div class="error" id="loginErr"></div>
+    <div class="topbar-right">
+      <a href="/" class="top-btn">返回首页</a>
+      <button class="top-btn" id="logoutBtn" onclick="logout()">退出登录</button>
+    </div>
+  </div>
+
+  <div id="loginPage" style="display:flex;flex:1;align-items:flex-start;justify-content:center">
+    <div class="login-box">
+      <h2>管理后台登录</h2>
+      <div class="field">
+        <label>管理员密码</label>
+        <input type="password" id="adminPwd" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">登录</button>
+      <div class="error" id="loginErr"></div>
+    </div>
+  </div>
+
+  <div class="content" id="dashPage" style="display:none">
+    <div class="stats" id="statsGrid"></div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body">
+        <div class="card-title">
+          <h3>API Key 管理</h3>
+          <div class="note" style="font-size:12px;color:var(--text-muted)">共 <span id="keyTotalCount">-</span> 条</div>
+        </div>
+        <div class="toolbar" style="margin-bottom:0">
+          <button class="btn-primary" onclick="showCreateModal()">创建 Key</button>
+          <button class="btn-warn" onclick="showBatchModal()">批量创建</button>
+          <input type="text" class="search-input" id="searchInput" placeholder="搜索 Key 名称..." oninput="loadKeys()">
+          <button class="top-btn" onclick="loadKeys()">刷新</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>名称</th>
+            <th>Key</th>
+            <th>状态</th>
+            <th>额度</th>
+            <th>有效期</th>
+            <th>最后使用</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="keysBody"></tbody>
+      </table>
+    </div>
+
+    <div class="pagination" id="pagination"></div>
   </div>
 </div>
 
-<!-- Dashboard -->
-<div class="container" id="dashPage" style="display:none">
-  <div class="stats" id="statsGrid"></div>
-
-  <div class="toolbar">
-    <button class="btn-primary" onclick="showCreateModal()">+ 创建 Key</button>
-    <button class="btn-warn" onclick="showBatchModal()">批量创建</button>
-    <input type="text" id="searchInput" placeholder="搜索 Key 名称..." style="width:220px" oninput="loadKeys()">
-    <button class="btn-sm" onclick="loadKeys()">刷新</button>
-  </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>名称</th>
-          <th>Key</th>
-          <th>状态</th>
-          <th>额度</th>
-          <th>有效期</th>
-          <th>最后使用</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="keysBody"></tbody>
-    </table>
-  </div>
-
-  <div class="pagination" id="pagination"></div>
-</div>
-
-<!-- Create Modal -->
 <div class="modal-overlay" id="createModal">
   <div class="modal">
-    <h3 id="modalTitle">创建 API Key</h3>
+    <h3>创建 API Key</h3>
     <div class="field">
       <label>名称/备注</label>
       <input type="text" id="mName" placeholder="例如：张三的Key">
@@ -163,13 +231,12 @@ tr:hover td{background:rgba(0,212,255,.02)}
     </div>
     <div class="modal-actions">
       <button class="btn-sm" onclick="closeModal('createModal')">取消</button>
-      <button class="btn-primary" id="mSubmit" onclick="doCreate()">创建</button>
+      <button class="btn-sm primary" onclick="doCreate()">创建</button>
     </div>
     <div class="result-box" id="mResult" style="display:none"></div>
   </div>
 </div>
 
-<!-- Batch Modal -->
 <div class="modal-overlay" id="batchModal">
   <div class="modal">
     <h3>批量创建 Key</h3>
@@ -193,9 +260,48 @@ tr:hover td{background:rgba(0,212,255,.02)}
     </div>
     <div class="modal-actions">
       <button class="btn-sm" onclick="closeModal('batchModal')">取消</button>
-      <button class="btn-warn" onclick="doBatch()">批量创建</button>
+      <button class="btn-warn" style="height:36px;padding:0 16px;display:inline-flex;align-items:center" onclick="doBatch()">批量创建</button>
     </div>
     <div class="result-box" id="bResult" style="display:none"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>编辑 Key</h3>
+    <input type="hidden" id="eId">
+    <div class="field">
+      <label>名称/备注</label>
+      <input type="text" id="eName" placeholder="例如：张三的Key">
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>最大生成张数（-1=无限）</label>
+        <input type="number" id="eMax" value="-1" min="-1">
+      </div>
+      <div class="field">
+        <label>已用张数</label>
+        <input type="number" id="eUsed" value="0" min="0">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>过期时间</label>
+        <input type="datetime-local" id="eExpires">
+      </div>
+      <div class="field">
+        <label>状态</label>
+        <select id="eEnabled">
+          <option value="1">启用</option>
+          <option value="0">禁用</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <label class="reset-check"><input type="checkbox" id="eResetUsage"> 同时重置已用额度</label>
+      <button class="btn-sm" onclick="closeModal('editModal')">取消</button>
+      <button class="btn-sm primary" onclick="doUpdate()">保存</button>
+    </div>
   </div>
 </div>
 
@@ -203,7 +309,6 @@ tr:hover td{background:rgba(0,212,255,.02)}
 let token = localStorage.getItem('gpt-admin-token');
 let page = 1;
 
-// Auto-check token
 if (token) showDashboard();
 
 function api(path, opts = {}) {
@@ -266,31 +371,34 @@ async function loadKeys() {
   const search = document.getElementById('searchInput').value.trim();
   try {
     const r = await api(`/keys?page=${page}&limit=20&search=${encodeURIComponent(search)}`);
+    document.getElementById('keyTotalCount').textContent = r.total;
     const tbody = document.getElementById('keysBody');
     tbody.innerHTML = r.data.length ? r.data.map(k => {
       const status = !k.enabled ? '<span class="badge disabled">禁用</span>'
         : (k.expiresAt && new Date(k.expiresAt) < new Date()) ? '<span class="badge expired">已过期</span>'
         : '<span class="badge active">正常</span>';
+      const remaining = k.maxImages < 0 ? '∞' : (k.maxImages - k.usedImages);
+      const quotaColor = k.maxImages > 0 && k.usedImages >= k.maxImages ? 'var(--status-err)' : 'var(--status-ok)';
       const quota = k.maxImages < 0 ? `${k.usedImages} / ∞`
-        : `${k.usedImages} / ${k.maxImages} <span style="color:${k.usedImages >= k.maxImages ? 'var(--accent2)' : 'var(--success)'}">(${k.maxImages - k.usedImages}剩余)</span>`;
+        : `${k.usedImages} / ${k.maxImages} <span style="color:${quotaColor};font-weight:500">（${remaining}剩余）</span>`;
       const exp = k.expiresAt ? new Date(k.expiresAt).toLocaleString('zh-CN') : '永不过期';
-      const lastUsed = k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString('zh-CN') : '-';
+      const lastUsed = k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleString('zh-CN') : '—';
       return `<tr>
-        <td>${k.name || '-'}</td>
+        <td style="font-weight:500">${k.name || '—'}</td>
         <td><span class="key-text" onclick="copyKey(this)" title="点击复制">${k.key}</span><span class="copy-hint">点击复制</span></td>
         <td>${status}</td>
         <td>${quota}</td>
         <td style="font-size:12px">${exp}</td>
-        <td style="font-size:12px">${lastUsed}</td>
+        <td style="font-size:12px;color:var(--text-muted)">${lastUsed}</td>
         <td>
+          <button class="btn-sm" onclick="showEditModal('${k.id}','${(k.name||'').replace(/'/g,"&#39;")}',${k.maxImages},${k.usedImages},'${k.expiresAt||''}',${k.enabled})">编辑</button>
           <button class="btn-sm success" onclick="toggleKey('${k.id}',${!k.enabled})">${k.enabled ? '禁用' : '启用'}</button>
-          <button class="btn-sm" onclick="resetUsage('${k.id}')">重置额度</button>
-          <button class="btn-sm danger" onclick="deleteKey('${k.id}','${k.name}')">删除</button>
+          <button class="btn-sm" onclick="resetUsage('${k.id}')">重置</button>
+          <button class="btn-sm danger" onclick="deleteKey('${k.id}','${(k.name||'').replace(/'/g,"&#39;")}')">删除</button>
         </td>
       </tr>`;
-    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:32px">暂无 Key</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">暂无 Key</td></tr>';
 
-    // Pagination
     const total = r.total;
     const totalPages = Math.ceil(total / 20);
     document.getElementById('pagination').innerHTML = totalPages > 1 ? `
@@ -305,7 +413,7 @@ function copyKey(el) {
   navigator.clipboard.writeText(el.textContent).then(() => {
     const hint = el.nextElementSibling;
     hint.textContent = '已复制!';
-    hint.style.color = 'var(--success)';
+    hint.style.color = 'var(--status-ok)';
     setTimeout(() => { hint.textContent = '点击复制'; hint.style.color = ''; }, 1500);
   });
 }
@@ -315,7 +423,6 @@ function showCreateModal() {
   document.getElementById('mMax').value = '-1';
   document.getElementById('mExpires').value = '';
   document.getElementById('mResult').style.display = 'none';
-  document.getElementById('modalTitle').textContent = '创建 API Key';
   document.getElementById('createModal').classList.add('show');
 }
 
@@ -367,12 +474,39 @@ async function toggleKey(id, enable) {
 async function resetUsage(id) {
   try { await api('/keys/' + id, { method: 'PATCH', body: JSON.stringify({ resetUsage: true }) }); loadKeys(); loadStats(); } catch {}
 }
+function showEditModal(id, name, maxImages, usedImages, expiresAt, enabled) {
+  document.getElementById('eId').value = id;
+  document.getElementById('eName').value = name||'';
+  document.getElementById('eMax').value = maxImages;
+  document.getElementById('eUsed').value = usedImages;
+  document.getElementById('eExpires').value = expiresAt ? new Date(expiresAt).toISOString().slice(0,16) : '';
+  document.getElementById('eEnabled').value = enabled ? '1' : '0';
+  document.getElementById('eResetUsage').checked = false;
+  document.getElementById('editModal').classList.add('show');
+}
+async function doUpdate() {
+  const id = document.getElementById('eId').value;
+  const body = {
+    name: document.getElementById('eName').value.trim(),
+    maxImages: parseInt(document.getElementById('eMax').value),
+    enabled: document.getElementById('eEnabled').value === '1',
+    expiresAt: document.getElementById('eExpires').value ? new Date(document.getElementById('eExpires').value).toISOString() : null,
+    resetUsage: document.getElementById('eResetUsage').checked
+  };
+  if (document.getElementById('eUsed').value !== '') {
+    body.usedImages = parseInt(document.getElementById('eUsed').value);
+  }
+  try {
+    await api('/keys/' + id, { method: 'PATCH', body: JSON.stringify(body) });
+    closeModal('editModal');
+    loadKeys(); loadStats();
+  } catch (e) { alert('更新失败: ' + e.message); }
+}
 async function deleteKey(id, name) {
   if (!confirm('确认删除 Key "' + (name || id) + '"？')) return;
   try { await api('/keys/' + id, { method: 'DELETE' }); loadKeys(); loadStats(); } catch {}
 }
 
-// Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.addEventListener('click', e => { if (e.target === o) o.classList.remove('show') });
 });

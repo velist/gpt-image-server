@@ -8,17 +8,6 @@ const fs = require('fs');
 const crypto = require('crypto');
 const multer = require('multer');
 
-// Config
-const UPSTREAM_BASE = process.env.UPSTREAM_API_BASE || 'https://api.duckcoding.ai/v1';
-const UPSTREAM_KEY = process.env.UPSTREAM_API_KEY || '';
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
-const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-const PORT = parseInt(process.env.PORT) || 3000;
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
-const GITHUB_REPO = process.env.GITHUB_REPO || 'velist/gpt-image-server';
-const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'master';
-const KEY_BACKUP_PATH = 'data/keys-backup.json';
-
 // Load .env manually if no dotenv
 if (!process.env.UPSTREAM_API_BASE) {
   try {
@@ -31,6 +20,17 @@ if (!process.env.UPSTREAM_API_BASE) {
     }
   } catch {}
 }
+
+// Config
+const UPSTREAM_BASE = process.env.UPSTREAM_API_BASE || 'https://api.duckcoding.ai/v1';
+const UPSTREAM_KEY = process.env.UPSTREAM_API_KEY || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const PORT = parseInt(process.env.PORT) || 3000;
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
+const GITHUB_REPO = process.env.GITHUB_REPO || 'velist/gpt-image-server';
+const GITHUB_BRANCH = process.env.GITHUB_BRANCH || 'master';
+const KEY_BACKUP_PATH = 'data/keys-backup.json';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 const app = express();
@@ -242,6 +242,7 @@ function writeLocalKeyBackup(content) {
 function replaceKeysFromBackup(items) {
   const stmt = db.prepare(`INSERT INTO keys (id, key, name, max_images, used_images, expires_at, created_at, enabled, last_used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const tx = db.transaction(keys => {
+    db.prepare('DELETE FROM generate_tasks').run();
     db.prepare('DELETE FROM keys').run();
     for (const k of keys) {
       stmt.run(k.id || uuidv4(), k.key, k.name || '', k.maxImages ?? -1, k.usedImages || 0, k.expiresAt || null, k.createdAt || new Date().toISOString(), k.enabled === false ? 0 : 1, k.lastUsedAt || null);
@@ -328,7 +329,8 @@ async function updateGitHubKeyBackup() {
 }
 
 async function persistKeysToGitHub() {
-  return updateGitHubKeyBackup();
+  const ok = await updateGitHubKeyBackup();
+  if (!ok) throw new Error('GitHub 持久化失败：备份未成功写入远程仓库');
 }
 
 let backupTimer;
@@ -384,15 +386,29 @@ function proxyRequest(targetPath, method, headers, body) {
       rejectUnauthorized: false,
       timeout: 300000
     };
+    let responseStarted = false;
     const req = mod.request(opts, res => {
+      responseStarted = true;
       const chunks = [];
       res.on('data', c => chunks.push(c));
       res.on('end', () => {
         const buf = Buffer.concat(chunks);
         resolve({ status: res.statusCode, headers: res.headers, body: buf });
       });
+      res.on('error', err => {
+        // If we already have some data, use what we got
+        if (chunks.length) {
+          const buf = Buffer.concat(chunks);
+          resolve({ status: res.statusCode, headers: res.headers, body: buf });
+        } else {
+          reject(err);
+        }
+      });
     });
-    req.on('error', reject);
+    req.on('error', err => {
+      if (responseStarted) return; // response already handled
+      reject(err);
+    });
     req.on('timeout', () => { req.destroy(); reject(new Error('Upstream timeout')); });
     if (body) req.write(body);
     req.end();
@@ -414,11 +430,20 @@ async function runGenerateTask(taskId, keyId, body) {
     .run(now, now, taskId);
 
   try {
-    console.log(`[GENERATE] task=${taskId} n=${body.n||1} size=${body.size||'default'} model=${body.model||'default'}`);
-    const result = await proxyRequest('/images/generations', 'POST', {
+    const reqHeaders = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
-    }, JSON.stringify(body));
+    };
+    let result;
+    try {
+      console.log(`[GENERATE] task=${taskId} n=${body.n||1} size=${body.size||'default'} model=${body.model||'default'}`);
+      result = await proxyRequest('/images/generations', 'POST', reqHeaders, JSON.stringify(body));
+    } catch (firstErr) {
+      console.log(`[GENERATE] task=${taskId} first attempt failed: ${firstErr.message}, retrying in 2s...`);
+      await new Promise(r => setTimeout(r, 2000));
+      console.log(`[GENERATE] task=${taskId} retrying...`);
+      result = await proxyRequest('/images/generations', 'POST', reqHeaders, JSON.stringify(body));
+    }
 
     if (result.status === 200) {
       const responseBody = result.body.toString('utf8');
@@ -550,11 +575,20 @@ async function runEditTask(taskId, keyId, filePath) {
   }
 
   try {
-    console.log(`[EDIT] task=${taskId} prompt=${(JSON.parse(task.request_json).prompt||'').slice(0,60)}`);
-    const result = await proxyRequest('/images/edits', 'POST', {
+    const editHeaders = {
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
       'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
-    }, bodyBuf);
+    };
+    let result;
+    try {
+      console.log(`[EDIT] task=${taskId} prompt=${(JSON.parse(task.request_json).prompt||'').slice(0,60)}`);
+      result = await proxyRequest('/images/edits', 'POST', editHeaders, bodyBuf);
+    } catch (firstErr) {
+      console.log(`[EDIT] task=${taskId} first attempt failed: ${firstErr.message}, retrying in 2s...`);
+      await new Promise(r => setTimeout(r, 2000));
+      console.log(`[EDIT] task=${taskId} retrying...`);
+      result = await proxyRequest('/images/edits', 'POST', editHeaders, bodyBuf);
+    }
 
     if (result.status === 200) {
       const responseBody = result.body.toString('utf8');
@@ -707,12 +741,13 @@ app.patch('/api/admin/keys/:id', async (req, res) => {
   try {
     const row = db.prepare('SELECT * FROM keys WHERE id = ?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Key 不存在' });
-    const { name, maxImages, expiresAt, enabled, resetUsage } = req.body;
+    const { name, maxImages, expiresAt, enabled, resetUsage, usedImages } = req.body;
     if (name !== undefined) db.prepare('UPDATE keys SET name = ? WHERE id = ?').run(name, req.params.id);
     if (maxImages !== undefined) db.prepare('UPDATE keys SET max_images = ? WHERE id = ?').run(maxImages, req.params.id);
     if (expiresAt !== undefined) db.prepare('UPDATE keys SET expires_at = ? WHERE id = ?').run(expiresAt, req.params.id);
     if (enabled !== undefined) db.prepare('UPDATE keys SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, req.params.id);
     if (resetUsage) db.prepare('UPDATE keys SET used_images = 0 WHERE id = ?').run(req.params.id);
+    else if (usedImages !== undefined) db.prepare('UPDATE keys SET used_images = ? WHERE id = ?').run(usedImages, req.params.id);
     await persistKeysToGitHub();
     res.json(keyToJSON(db.prepare('SELECT * FROM keys WHERE id = ?').get(req.params.id)));
   } catch (e) {
