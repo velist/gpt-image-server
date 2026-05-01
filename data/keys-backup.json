@@ -1,5 +1,17 @@
 [
   {
+    "id": "d04dc659-8170-48e7-895d-8a9188e15b43",
+    "key": "sk-gi-183edd6075c4d7027d7cf095dc74444b50bb13d7b60b1944",
+    "name": "蘑菇",
+    "maxImages": 10,
+    "usedImages": 0,
+    "remaining": 10,
+    "expiresAt": null,
+    "createdAt": "2026-05-01 04:47:31",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "2a0ee0ed-71b8-4fea-be3c-7d7abae9e251",
     "key": "sk-gi-03b8f631de2509f7efd1efa6f3447d9a8724b3aacde6809c",
     "name": "Truman",
