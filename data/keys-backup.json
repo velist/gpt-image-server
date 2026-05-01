@@ -1,5 +1,17 @@
 [
   {
+    "id": "7ecabb23-c124-4182-bb6e-59b2ba1b1f69",
+    "key": "sk-gi-d0a18dd6bd09dbd42d2d7555bc379a5faf6d7a8e14c03a2e",
+    "name": "dimo",
+    "maxImages": 10,
+    "usedImages": 0,
+    "remaining": 10,
+    "expiresAt": null,
+    "createdAt": "2026-05-01 15:42:59",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "d04dc659-8170-48e7-895d-8a9188e15b43",
     "key": "sk-gi-183edd6075c4d7027d7cf095dc74444b50bb13d7b60b1944",
     "name": "蘑菇",
