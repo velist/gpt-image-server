@@ -305,18 +305,20 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
             <div class="card">
               <div class="card-body">
                 <div class="card-title"><h3>尺寸</h3></div>
-                <div class="preset-grid" id="sizePresetGrid">
-                  <button class="preset-btn active" data-size="1024x1024"><span class="name">1:1·方图1K</span><span class="dim">1024×1024</span></button>
-                  <button class="preset-btn" data-size="2048x2048"><span class="name">1:1·方图2K</span><span class="dim">2048×2048</span></button>
-                  <button class="preset-btn" data-size="1536x1024"><span class="name">3:2·横图</span><span class="dim">1536×1024</span></button>
-                  <button class="preset-btn" data-size="1024x1536"><span class="name">2:3·竖图</span><span class="dim">1024×1536</span></button>
-                  <button class="preset-btn" data-size="2048x1152"><span class="name">16:9·横图2K</span><span class="dim">2048×1152</span></button>
-                  <button class="preset-btn" data-size="1152x2048"><span class="name">9:16·竖图2K</span><span class="dim">1152×2048</span></button>
-                  <button class="preset-btn" data-size="3840x2160"><span class="name">16:9·4K横图</span><span class="dim">3840×2160</span></button>
-                  <button class="preset-btn" data-size="2160x3840"><span class="name">9:16·4K竖图</span><span class="dim">2160×3840</span></button>
-                  <button class="preset-btn" data-size="2520x1080"><span class="name">21:9·超宽</span><span class="dim">2520×1080</span></button>
-                  <button class="preset-btn" data-size="3360x1440"><span class="name">21:9·超宽 2K</span><span class="dim">3360×1440</span></button>
-                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">最大 3840×3840</span></button>
+                <div class="field">
+                  <select id="sizeSelect">
+                    <option value="1024x1024" selected>1:1·方图1K · 1024×1024</option>
+                    <option value="2048x2048">1:1·方图2K · 2048×2048</option>
+                    <option value="1536x1024">3:2·横图 · 1536×1024</option>
+                    <option value="1024x1536">2:3·竖图 · 1024×1536</option>
+                    <option value="2048x1152">16:9·横图2K · 2048×1152</option>
+                    <option value="1152x2048">9:16·竖图2K · 1152×2048</option>
+                    <option value="3840x2160">16:9·4K横图 · 3840×2160</option>
+                    <option value="2160x3840">9:16·4K竖图 · 2160×3840</option>
+                    <option value="2520x1080">21:9·超宽 · 2520×1080</option>
+                    <option value="3360x1440">21:9·超宽 2K · 3360×1440</option>
+                    <option value="custom">自定义 · 最大 3840×3840</option>
+                  </select>
                 </div>
                 <div class="field hidden" id="customSizeField" style="margin-top:12px">
                   <label>自定义尺寸</label>
@@ -347,12 +349,18 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
                 </div>
                 <div class="field">
                   <label>输出数量</label>
-                  <div class="count-row" id="countRow">
-                    <button class="count-btn active" data-count="1">1</button>
-                    <button class="count-btn" data-count="2">2</button>
-                    <button class="count-btn" data-count="4">4</button>
-                    <button class="count-btn" data-count="6">6</button>
-                  </div>
+                  <select id="countSelect">
+                    <option value="1" selected>1 张</option>
+                    <option value="2">2 张</option>
+                    <option value="3">3 张</option>
+                    <option value="4">4 张</option>
+                    <option value="5">5 张</option>
+                    <option value="6">6 张</option>
+                    <option value="7">7 张</option>
+                    <option value="8">8 张</option>
+                    <option value="9">9 张</option>
+                    <option value="10">10 张</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -398,18 +406,20 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
             <div class="card">
               <div class="card-body">
                 <div class="card-title"><h3>尺寸</h3></div>
-                <div class="preset-grid" id="editSizePresetGrid">
-                  <button class="preset-btn active" data-size="1024x1024"><span class="name">1:1·方图1K</span><span class="dim">1024×1024</span></button>
-                  <button class="preset-btn" data-size="2048x2048"><span class="name">1:1·方图2K</span><span class="dim">2048×2048</span></button>
-                  <button class="preset-btn" data-size="1536x1024"><span class="name">3:2·横图</span><span class="dim">1536×1024</span></button>
-                  <button class="preset-btn" data-size="1024x1536"><span class="name">2:3·竖图</span><span class="dim">1024×1536</span></button>
-                  <button class="preset-btn" data-size="2048x1152"><span class="name">16:9·横图2K</span><span class="dim">2048×1152</span></button>
-                  <button class="preset-btn" data-size="1152x2048"><span class="name">9:16·竖图2K</span><span class="dim">1152×2048</span></button>
-                  <button class="preset-btn" data-size="3840x2160"><span class="name">16:9·4K横图</span><span class="dim">3840×2160</span></button>
-                  <button class="preset-btn" data-size="2160x3840"><span class="name">9:16·4K竖图</span><span class="dim">2160×3840</span></button>
-                  <button class="preset-btn" data-size="2520x1080"><span class="name">21:9·超宽</span><span class="dim">2520×1080</span></button>
-                  <button class="preset-btn" data-size="3360x1440"><span class="name">21:9·超宽 2K</span><span class="dim">3360×1440</span></button>
-                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">最大 3840×3840</span></button>
+                <div class="field">
+                  <select id="editSizeSelect">
+                    <option value="1024x1024" selected>1:1·方图1K · 1024×1024</option>
+                    <option value="2048x2048">1:1·方图2K · 2048×2048</option>
+                    <option value="1536x1024">3:2·横图 · 1536×1024</option>
+                    <option value="1024x1536">2:3·竖图 · 1024×1536</option>
+                    <option value="2048x1152">16:9·横图2K · 2048×1152</option>
+                    <option value="1152x2048">9:16·竖图2K · 1152×2048</option>
+                    <option value="3840x2160">16:9·4K横图 · 3840×2160</option>
+                    <option value="2160x3840">9:16·4K竖图 · 2160×3840</option>
+                    <option value="2520x1080">21:9·超宽 · 2520×1080</option>
+                    <option value="3360x1440">21:9·超宽 2K · 3360×1440</option>
+                    <option value="custom">自定义 · 最大 3840×3840</option>
+                  </select>
                 </div>
                 <div class="field hidden" id="editCustomSizeField" style="margin-top:12px">
                   <label>自定义尺寸</label>
@@ -432,12 +442,18 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
                 </div>
                 <div class="field">
                   <label>生成数量</label>
-                  <div class="count-row" id="editCountRow">
-                    <button class="count-btn active" data-count="1">1</button>
-                    <button class="count-btn" data-count="2">2</button>
-                    <button class="count-btn" data-count="4">4</button>
-                    <button class="count-btn" data-count="6">6</button>
-                  </div>
+                  <select id="editCountSelect">
+                    <option value="1" selected>1 张</option>
+                    <option value="2">2 张</option>
+                    <option value="3">3 张</option>
+                    <option value="4">4 张</option>
+                    <option value="5">5 张</option>
+                    <option value="6">6 张</option>
+                    <option value="7">7 张</option>
+                    <option value="8">8 张</option>
+                    <option value="9">9 张</option>
+                    <option value="10">10 张</option>
+                  </select>
                 </div>
                 <button class="primary-wide" id="editBtn">开始生成</button>
               </div>
@@ -1042,24 +1058,20 @@ function bindEvents(){
   document.getElementById('debugErrorsToggle').addEventListener('change',e=>{state.settings.debugErrors=e.target.checked;persistSettings()});
   document.getElementById('historyLimitSelect').addEventListener('change',e=>{state.settings.historyLimit=Number(e.target.value)||20;persistSettings();persistHistory();renderTaskList();if(state.selectedTaskId)renderTaskDetail(state.selectedTaskId)});
   document.getElementById('clearHistoryBtn').addEventListener('click',clearAllHistory);
-  document.querySelectorAll('#sizePresetGrid .preset-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('#sizePresetGrid .preset-btn').forEach(x=>x.classList.remove('active'));
-    btn.classList.add('active');
-    state.selectedSize=btn.dataset.size;
+  document.getElementById('sizeSelect').addEventListener('change',e=>{
+    state.selectedSize=e.target.value;
     toggleCustomSizeField();
     if(state.selectedSize==='custom')document.getElementById('customSizeInput').focus();
-  }));
-  document.querySelectorAll('#editSizePresetGrid .preset-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('#editSizePresetGrid .preset-btn').forEach(x=>x.classList.remove('active'));
-    btn.classList.add('active');
-    state.editSelectedSize=btn.dataset.size;
+  });
+  document.getElementById('editSizeSelect').addEventListener('change',e=>{
+    state.editSelectedSize=e.target.value;
     toggleEditCustomSizeField();
     if(state.editSelectedSize==='custom')document.getElementById('editCustomSizeInput').focus();
-  }));
+  });
   document.getElementById('customSizeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runGenerate()}});
   document.getElementById('editCustomSizeInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();runEdit()}});
-  document.querySelectorAll('#countRow .count-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#countRow .count-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.selectedCount=Number(btn.dataset.count)||1}));
-  document.querySelectorAll('#editCountRow .count-btn').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('#editCountRow .count-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');state.editSelectedCount=Number(btn.dataset.count)||1}));
+  document.getElementById('countSelect').addEventListener('change',e=>{state.selectedCount=Number(e.target.value)||1});
+  document.getElementById('editCountSelect').addEventListener('change',e=>{state.editSelectedCount=Number(e.target.value)||1});
   document.querySelectorAll('#quickPromptChips .chip').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById('generatePrompt').value=btn.dataset.prompt;document.getElementById('generateCounter').textContent=document.getElementById('generatePrompt').value.length+' / 4000'}));
   document.getElementById('generatePrompt').addEventListener('input',e=>{document.getElementById('generateCounter').textContent=e.target.value.length+' / 4000'});
   document.getElementById('clearSlotsBtn').addEventListener('click',clearAllSlots);
