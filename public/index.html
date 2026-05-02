@@ -306,17 +306,21 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
               <div class="card-body">
                 <div class="card-title"><h3>尺寸</h3></div>
                 <div class="preset-grid" id="sizePresetGrid">
-                  <button class="preset-btn active" data-size="1024x1024"><span class="name">方图</span><span class="dim">1024×1024</span></button>
-                  <button class="preset-btn" data-size="1536x1024"><span class="name">横图</span><span class="dim">1536×1024</span></button>
-                  <button class="preset-btn" data-size="1024x1536"><span class="name">竖图</span><span class="dim">1024×1536</span></button>
-                  <button class="preset-btn" data-size="2048x2048"><span class="name">2K 方图</span><span class="dim">2048×2048</span></button>
-                  <button class="preset-btn" data-size="3840x2160"><span class="name">4K 横图</span><span class="dim">3840×2160</span></button>
-                  <button class="preset-btn" data-size="2160x3840"><span class="name">4K 竖图</span><span class="dim">2160×3840</span></button>
-                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">宽×高，最大 4000</span></button>
+                  <button class="preset-btn active" data-size="1024x1024"><span class="name">1:1·方图1K</span><span class="dim">1024×1024</span></button>
+                  <button class="preset-btn" data-size="2048x2048"><span class="name">1:1·方图2K</span><span class="dim">2048×2048</span></button>
+                  <button class="preset-btn" data-size="1536x1024"><span class="name">3:2·横图</span><span class="dim">1536×1024</span></button>
+                  <button class="preset-btn" data-size="1024x1536"><span class="name">2:3·竖图</span><span class="dim">1024×1536</span></button>
+                  <button class="preset-btn" data-size="2048x1152"><span class="name">16:9·横图2K</span><span class="dim">2048×1152</span></button>
+                  <button class="preset-btn" data-size="1152x2048"><span class="name">9:16·竖图2K</span><span class="dim">1152×2048</span></button>
+                  <button class="preset-btn" data-size="3840x2160"><span class="name">16:9·4K横图</span><span class="dim">3840×2160</span></button>
+                  <button class="preset-btn" data-size="2160x3840"><span class="name">9:16·4K竖图</span><span class="dim">2160×3840</span></button>
+                  <button class="preset-btn" data-size="2520x1080"><span class="name">21:9·超宽</span><span class="dim">2520×1080</span></button>
+                  <button class="preset-btn" data-size="3360x1440"><span class="name">21:9·超宽 2K</span><span class="dim">3360×1440</span></button>
+                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">最大 3840×3840</span></button>
                 </div>
                 <div class="field hidden" id="customSizeField" style="margin-top:12px">
                   <label>自定义尺寸</label>
-                  <input type="text" id="customSizeInput" placeholder="例如 1920x1080，最大 4000x4000">
+                  <input type="text" id="customSizeInput" placeholder="例如 1920x1080，最大 3840x3840">
                 </div>
               </div>
             </div>
@@ -395,16 +399,21 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
               <div class="card-body">
                 <div class="card-title"><h3>尺寸</h3></div>
                 <div class="preset-grid" id="editSizePresetGrid">
-                  <button class="preset-btn" data-size="auto"><span class="name">自动</span><span class="dim">原始尺寸</span></button>
-                  <button class="preset-btn active" data-size="1024x1024"><span class="name">方图</span><span class="dim">1024×1024</span></button>
-                  <button class="preset-btn" data-size="1536x1024"><span class="name">横图</span><span class="dim">1536×1024</span></button>
-                  <button class="preset-btn" data-size="1024x1536"><span class="name">竖图</span><span class="dim">1024×1536</span></button>
-                  <button class="preset-btn" data-size="2048x2048"><span class="name">2K 方图</span><span class="dim">2048×2048</span></button>
-                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">宽×高，最大 4000</span></button>
+                  <button class="preset-btn active" data-size="1024x1024"><span class="name">1:1·方图1K</span><span class="dim">1024×1024</span></button>
+                  <button class="preset-btn" data-size="2048x2048"><span class="name">1:1·方图2K</span><span class="dim">2048×2048</span></button>
+                  <button class="preset-btn" data-size="1536x1024"><span class="name">3:2·横图</span><span class="dim">1536×1024</span></button>
+                  <button class="preset-btn" data-size="1024x1536"><span class="name">2:3·竖图</span><span class="dim">1024×1536</span></button>
+                  <button class="preset-btn" data-size="2048x1152"><span class="name">16:9·横图2K</span><span class="dim">2048×1152</span></button>
+                  <button class="preset-btn" data-size="1152x2048"><span class="name">9:16·竖图2K</span><span class="dim">1152×2048</span></button>
+                  <button class="preset-btn" data-size="3840x2160"><span class="name">16:9·4K横图</span><span class="dim">3840×2160</span></button>
+                  <button class="preset-btn" data-size="2160x3840"><span class="name">9:16·4K竖图</span><span class="dim">2160×3840</span></button>
+                  <button class="preset-btn" data-size="2520x1080"><span class="name">21:9·超宽</span><span class="dim">2520×1080</span></button>
+                  <button class="preset-btn" data-size="3360x1440"><span class="name">21:9·超宽 2K</span><span class="dim">3360×1440</span></button>
+                  <button class="preset-btn" data-size="custom"><span class="name">自定义</span><span class="dim">最大 3840×3840</span></button>
                 </div>
                 <div class="field hidden" id="editCustomSizeField" style="margin-top:12px">
                   <label>自定义尺寸</label>
-                  <input type="text" id="editCustomSizeInput" placeholder="例如 1920x1080，最大 4000x4000">
+                  <input type="text" id="editCustomSizeInput" placeholder="例如 1920x1080，最大 3840x3840">
                 </div>
               </div>
             </div>
@@ -727,7 +736,7 @@ function resolveGenerateSize(){
   const width=Number(match[1]);
   const height=Number(match[2]);
   if(width<1||height<1)throw new Error('自定义尺寸必须大于 0');
-  if(width>4000||height>4000)throw new Error('自定义尺寸最大支持 4000x4000');
+  if(width>3840||height>3840)throw new Error('自定义尺寸最大支持 3840x3840');
   return width+'x'+height;
 }
 
@@ -838,7 +847,7 @@ function resolveEditSize(){
   if(!match)throw new Error('自定义尺寸格式错误，请输入如 1920x1080');
   const width=Number(match[1]),height=Number(match[2]);
   if(width<1||height<1)throw new Error('自定义尺寸必须大于 0');
-  if(width>4000||height>4000)throw new Error('自定义尺寸最大支持 4000x4000');
+  if(width>3840||height>3840)throw new Error('自定义尺寸最大支持 3840x3840');
   return width+'x'+height;
 }
 

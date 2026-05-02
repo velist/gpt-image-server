@@ -95,7 +95,7 @@ function validateSize(size) {
   if (!match) return '尺寸格式应为 宽x高，例如 1024x1024';
   const width = parseInt(match[1], 10);
   const height = parseInt(match[2], 10);
-  if (width < 1 || height < 1 || width > 4000 || height > 4000) return '宽高必须在 1-4000 像素之间';
+  if (width < 1 || height < 1 || width > 3840 || height > 3840) return '宽高必须在 1-3840 像素之间';
   return null;
 }
 
