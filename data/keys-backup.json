@@ -1,5 +1,17 @@
 [
   {
+    "id": "a72ec842-41d6-4688-8995-2ab861534801",
+    "key": "sk-gi-bc1fd710dd1a0a7e51a9e91b6278d1ae5cc24f271d10ae7f",
+    "name": "后台专用",
+    "maxImages": 99999,
+    "usedImages": 0,
+    "remaining": 99999,
+    "expiresAt": null,
+    "createdAt": "2026-05-03 19:01:25",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "98db1b6c-1198-44ff-955c-8649ace643d4",
     "key": "sk-gi-6f2b03539b9fb8ed68ff40cd5919f3990eef004d10a74fd6",
     "name": "好伦",
