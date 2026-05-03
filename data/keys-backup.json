@@ -16,12 +16,12 @@
     "key": "sk-gi-d0a18dd6bd09dbd42d2d7555bc379a5faf6d7a8e14c03a2e",
     "name": "dimo",
     "maxImages": 110,
-    "usedImages": 7,
-    "remaining": 103,
+    "usedImages": 23,
+    "remaining": 87,
     "expiresAt": null,
     "createdAt": "2026-05-01 15:42:59",
     "enabled": true,
-    "lastUsedAt": "2026-05-01T17:20:18.575Z"
+    "lastUsedAt": "2026-05-03T13:38:01.574Z"
   },
   {
     "id": "d04dc659-8170-48e7-895d-8a9188e15b43",
@@ -136,12 +136,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 188,
-    "remaining": 811,
+    "usedImages": 225,
+    "remaining": 774,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-05-02T11:01:35.462Z"
+    "lastUsedAt": "2026-05-03T11:58:33.229Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
