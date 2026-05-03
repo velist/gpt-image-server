@@ -4,12 +4,12 @@
     "key": "sk-gi-bc1fd710dd1a0a7e51a9e91b6278d1ae5cc24f271d10ae7f",
     "name": "后台专用",
     "maxImages": 99999,
-    "usedImages": 4,
-    "remaining": 99995,
+    "usedImages": 5,
+    "remaining": 99994,
     "expiresAt": null,
     "createdAt": "2026-05-03 19:01:25",
     "enabled": true,
-    "lastUsedAt": "2026-05-03T19:37:03.189Z"
+    "lastUsedAt": "2026-05-03T19:41:40.505Z"
   },
   {
     "id": "98db1b6c-1198-44ff-955c-8649ace643d4",
