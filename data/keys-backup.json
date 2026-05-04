@@ -1,17 +1,5 @@
 [
   {
-    "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
-    "key": "sk-gi-1d58f651f5f5ddfd33fe569c2785f29ef729cc0d1b85e28c",
-    "name": "阿唐",
-    "maxImages": 10,
-    "usedImages": 0,
-    "remaining": 10,
-    "expiresAt": null,
-    "createdAt": "2026-05-04 15:06:09",
-    "enabled": true,
-    "lastUsedAt": null
-  },
-  {
     "id": "98db1b6c-1198-44ff-955c-8649ace643d4",
     "key": "sk-gi-6f2b03539b9fb8ed68ff40cd5919f3990eef004d10a74fd6",
     "name": "好伦",
@@ -148,12 +136,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 225,
-    "remaining": 774,
+    "usedImages": 188,
+    "remaining": 811,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-05-04T14:40:49.064Z"
+    "lastUsedAt": "2026-05-02T11:01:35.462Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
