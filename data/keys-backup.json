@@ -1120,12 +1120,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 339,
-    "remaining": 660,
+    "usedImages": 340,
+    "remaining": 659,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-05-08T05:40:25.021Z"
+    "lastUsedAt": "2026-05-08T05:40:37.321Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
