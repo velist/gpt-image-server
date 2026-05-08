@@ -228,18 +228,6 @@
     "lastUsedAt": null
   },
   {
-    "id": "a1cb94ba-da93-4531-9687-8b3a9c7bb290",
-    "key": "sk-gi-4e08845aeee2770d5c874b8c4df75053a15f72df767c4e99",
-    "name": "系统 #83",
-    "maxImages": -1,
-    "usedImages": 0,
-    "remaining": -1,
-    "expiresAt": null,
-    "createdAt": "2026-05-07 15:36:46",
-    "enabled": true,
-    "lastUsedAt": null
-  },
-  {
     "id": "a8422b9a-7ed7-447f-a01b-bfa21353834f",
     "key": "sk-gi-6af8bb33a0dd1aadc626e09d8ce1253cf56f76a82f3f8aae",
     "name": "系统 #84",
