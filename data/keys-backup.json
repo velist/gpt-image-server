@@ -72,18 +72,6 @@
     "lastUsedAt": null
   },
   {
-    "id": "3cb89ba9-7480-43ba-8653-fb864b46e29d",
-    "key": "sk-gi-19228eb3b088ba0780615f165dba353f289f2e9700e64225",
-    "name": "系统 #100",
-    "maxImages": -1,
-    "usedImages": 0,
-    "remaining": -1,
-    "expiresAt": null,
-    "createdAt": "2026-05-07 15:36:46",
-    "enabled": true,
-    "lastUsedAt": null
-  },
-  {
     "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
     "key": "sk-gi-1d58f651f5f5ddfd33fe569c2785f29ef729cc0d1b85e28c",
     "name": "阿唐",
