@@ -1,27 +1,39 @@
 [
   {
-    "id": "98db1b6c-1198-44ff-955c-8649ace643d4",
-    "key": "sk-gi-6f2b03539b9fb8ed68ff40cd5919f3990eef004d10a74fd6",
-    "name": "好伦",
-    "maxImages": 10,
-    "usedImages": 0,
-    "remaining": 10,
+    "id": "05cce237-66c2-4ced-a54c-556b406f6dad",
+    "key": "sk-gi-098cc2a4bad1b27b34aad1f1ace76e221daad4f5a5417765",
+    "name": "系统 #5",
+    "maxImages": -1,
+    "usedImages": 32,
+    "remaining": -1,
     "expiresAt": null,
-    "createdAt": "2026-05-01 16:01:57",
+    "createdAt": "2026-05-07 15:36:46",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-05-08T14:40:25.000Z"
+  },
+  {
+    "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
+    "key": "sk-gi-1d58f651f5f5ddfd33fe569c2785f29ef729cc0d1b85e28c",
+    "name": "阿唐",
+    "maxImages": 10,
+    "usedImages": 3,
+    "remaining": 7,
+    "expiresAt": null,
+    "createdAt": "2026-05-04 15:06:09",
+    "enabled": true,
+    "lastUsedAt": "2026-05-04T17:30:02.517Z"
   },
   {
     "id": "7ecabb23-c124-4182-bb6e-59b2ba1b1f69",
     "key": "sk-gi-d0a18dd6bd09dbd42d2d7555bc379a5faf6d7a8e14c03a2e",
     "name": "dimo",
     "maxImages": 110,
-    "usedImages": 7,
-    "remaining": 103,
+    "usedImages": 28,
+    "remaining": 82,
     "expiresAt": null,
     "createdAt": "2026-05-01 15:42:59",
     "enabled": true,
-    "lastUsedAt": "2026-05-01T17:20:18.575Z"
+    "lastUsedAt": "2026-05-11T13:41:45.425Z"
   },
   {
     "id": "d04dc659-8170-48e7-895d-8a9188e15b43",
@@ -76,12 +88,12 @@
     "key": "sk-gi-72cc2a7eb3475bb216efb35ed64534d1fbf785bd0f8aa674",
     "name": "燕子",
     "maxImages": 10,
-    "usedImages": 8,
-    "remaining": 2,
+    "usedImages": 10,
+    "remaining": 0,
     "expiresAt": null,
     "createdAt": "2026-04-27 09:02:55",
     "enabled": true,
-    "lastUsedAt": "2026-04-28T07:34:55.674Z"
+    "lastUsedAt": "2026-05-09T07:53:03.014Z"
   },
   {
     "id": "cbadca8b-f5f6-4df5-8902-f226000b74ab",
@@ -136,24 +148,24 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 188,
-    "remaining": 811,
+    "usedImages": 401,
+    "remaining": 598,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-05-02T11:01:35.462Z"
+    "lastUsedAt": "2026-05-11T09:24:12.944Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
     "key": "sk-gi-0004d1b26c62033f9b5a6c18c13f04bc9b6319b19866ff99",
     "name": "钊曼",
-    "maxImages": 10,
-    "usedImages": 10,
-    "remaining": 0,
+    "maxImages": 100,
+    "usedImages": 16,
+    "remaining": 84,
     "expiresAt": null,
     "createdAt": "2026-04-25 01:25:11",
     "enabled": true,
-    "lastUsedAt": "2026-04-28T01:40:45.953Z"
+    "lastUsedAt": "2026-05-08T02:29:29.698Z"
   },
   {
     "id": "627abcfc-ab46-4cd3-a402-c814bbc6118e",
@@ -216,18 +228,6 @@
     "lastUsedAt": null
   },
   {
-    "id": "1db29302-023d-4571-9c4c-281fc6e3872b",
-    "key": "sk-gi-9aace8a004e236ffa2e388c441a0a6394334fe6b88e48487",
-    "name": "restored-key",
-    "maxImages": 3,
-    "usedImages": 3,
-    "remaining": 0,
-    "expiresAt": null,
-    "createdAt": "2026-04-24 23:17:35",
-    "enabled": true,
-    "lastUsedAt": null
-  },
-  {
     "id": "d48bbe41-45d6-4337-b8f4-00e555de67d9",
     "key": "sk-gi-6fad4ecf0ca9528e2a669b92d10bc4269edbb45316df0347",
     "name": "restored-key",
@@ -244,11 +244,11 @@
     "key": "sk-gi-8b70d8b444519d07106759e5a606a105911c0f12337f5a81",
     "name": "restored-key",
     "maxImages": 100,
-    "usedImages": 19,
-    "remaining": 81,
+    "usedImages": 20,
+    "remaining": 80,
     "expiresAt": null,
     "createdAt": "2026-04-24 23:17:33",
     "enabled": true,
-    "lastUsedAt": "2026-04-27T17:17:18.722Z"
+    "lastUsedAt": "2026-05-09T03:16:57.255Z"
   }
 ]
