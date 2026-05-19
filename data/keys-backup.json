@@ -4,12 +4,12 @@
     "key": "sk-gi-098cc2a4bad1b27b34aad1f1ace76e221daad4f5a5417765",
     "name": "系统 #5",
     "maxImages": -1,
-    "usedImages": 170,
+    "usedImages": 171,
     "remaining": -1,
     "expiresAt": null,
     "createdAt": "2026-05-07 15:36:46",
     "enabled": true,
-    "lastUsedAt": "2026-05-19T14:53:17.286Z"
+    "lastUsedAt": "2026-05-19T15:36:01.426Z"
   },
   {
     "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
@@ -148,12 +148,12 @@
     "key": "sk-gi-09d4f37dc03045975ae10cfb994c42d76ff3c9ef4cfb1a25",
     "name": "我",
     "maxImages": 999,
-    "usedImages": 500,
-    "remaining": 499,
+    "usedImages": 501,
+    "remaining": 498,
     "expiresAt": null,
     "createdAt": "2026-04-26 01:29:12",
     "enabled": true,
-    "lastUsedAt": "2026-05-19T15:10:30.625Z"
+    "lastUsedAt": "2026-05-19T15:14:23.101Z"
   },
   {
     "id": "72e28958-5166-4461-a4d9-54417dcd24c7",
