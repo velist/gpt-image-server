@@ -361,6 +361,65 @@ function startPeriodicKeyBackup() {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// --- Examples gallery (优秀示例) ---
+const EXAMPLES_DIR = path.resolve(__dirname, '..', '优秀示例');
+app.use('/examples-assets', express.static(EXAMPLES_DIR, {
+  fallthrough: true,
+  maxAge: '7d',
+}));
+app.get('/api/examples', (req, res) => {
+  try {
+    if (!fs.existsSync(EXAMPLES_DIR)) return res.json({ items: [] });
+    const files = fs.readdirSync(EXAMPLES_DIR);
+    const stems = new Set();
+    for (const f of files) {
+      const dot = f.lastIndexOf('.');
+      if (dot > 0) stems.add(f.slice(0, dot));
+    }
+    // Normalize a field that could be string or object into a display string
+    const _str = (v) => {
+      if (!v) return '';
+      if (typeof v === 'string') return v;
+      if (Array.isArray(v)) return v.join('，');
+      if (typeof v === 'object') {
+        const parts = Object.values(v).filter(p => typeof p === 'string' && p.trim());
+        return parts.join(' · ') || '';
+      }
+      return String(v);
+    };
+    const items = [];
+    for (const stem of stems) {
+      const jsonPath = path.join(EXAMPLES_DIR, stem + '.json');
+      if (!fs.existsSync(jsonPath)) continue;
+      const imageExt = ['png', 'jpg', 'jpeg', 'webp'].find(ext =>
+        fs.existsSync(path.join(EXAMPLES_DIR, stem + '.' + ext))
+      );
+      if (!imageExt) continue;
+      let data;
+      try { data = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')); }
+      catch { continue; }
+      items.push({
+        id: stem,
+        name: stem,
+        image: '/examples-assets/' + encodeURIComponent(stem + '.' + imageExt),
+        prompt: data.main_prompt || data.prompt || data.mainPrompt || '',
+        style: _str(data.style),
+        keyElements: data.key_elements || '',
+        composition: _str(data.composition),
+        lightingAndColors: data.lighting_and_colors || _str(data.style?.lighting) || '',
+        details: data.details || '',
+        aspectRatio: data.aspect_ratio || (data.generation_parameters && data.generation_parameters.aspect_ratio) || '',
+        negativePrompt: data.negative_prompt || '',
+      });
+    }
+    items.sort((a, b) => a.name.localeCompare(b.name, 'zh'));
+    res.json({ items });
+  } catch (err) {
+    console.error('GET /api/examples failed:', err);
+    res.status(500).json({ error: 'examples_load_failed' });
+  }
+});
+
 // CORS for API routes
 app.use('/api', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');

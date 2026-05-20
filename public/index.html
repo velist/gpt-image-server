@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <title>GPT-Image-2 Studio</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -187,10 +187,132 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
 .switch{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:var(--r-md)}
 .switch input{width:auto;transform:scale(1.1)}
 @media (max-width:1024px){.page-grid{grid-template-columns:1fr}.task-layout{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.content{padding:12px}.topbar{padding:0 12px}}
+
+/* --- 优秀示例（首页） --- */
+:root{
+  --mint:#6f9d83;
+  --mint-deep:#4f7e64;
+  --mint-soft:#eaf2ec;
+  --serif:"Instrument Serif","Songti SC","Noto Serif SC",ui-serif,Georgia,serif;
+}
+body.view-home{overflow:auto}
+.home-shell{position:fixed;inset:0;background:var(--bg);overflow-y:auto;z-index:5;display:flex;flex-direction:column}
+.home-shell.hidden{display:none!important}
+.app.hidden{display:none!important}
+.home-topbar{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;background:rgba(250,250,249,.85);backdrop-filter:saturate(140%) blur(10px);border-bottom:1px solid var(--border-faint)}
+.home-topbar .brand{display:flex;align-items:center;gap:10px}
+.home-topbar .brand-badge{width:30px;height:30px;border-radius:8px;background:var(--n-900);color:var(--text-inverted);font-weight:700;font-size:12.5px;display:flex;align-items:center;justify-content:center;letter-spacing:.02em}
+.home-topbar .brand-title{display:flex;flex-direction:column;line-height:1.1}
+.home-topbar .brand-title strong{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.home-topbar .brand-title small{font-size:11px;color:var(--text-muted);margin-top:2px}
+.home-topbar .top-links{display:flex;align-items:center;gap:6px}
+.home-topbar .link-btn{display:inline-flex;align-items:center;height:34px;padding:0 12px;border-radius:8px;background:transparent;border:1px solid transparent;color:var(--text-muted);font-size:13px;font-weight:500;transition:background-color .15s,color .15s,border-color .15s}
+.home-topbar .link-btn:hover{background:var(--bg-hover);color:var(--text)}
+.home-topbar .link-btn.primary{background:var(--n-900);border-color:var(--n-900);color:var(--text-inverted)}
+.home-topbar .link-btn.primary:hover{background:var(--n-700);border-color:var(--n-700);color:var(--text-inverted)}
+.home-main{flex:1;width:100%;max-width:1280px;margin:0 auto;padding:36px 28px 80px;box-sizing:border-box}
+.home-hero{display:flex;flex-direction:column;gap:12px;padding:8px 0 36px;margin-bottom:32px;border-bottom:1px solid var(--border)}
+.home-hero .eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--text-muted);font-weight:600}
+.home-hero h1{font-family:var(--serif);font-size:48px;line-height:1.12;font-weight:400;letter-spacing:-.012em;color:var(--text);max-width:880px}
+.home-hero p{font-size:14.5px;color:var(--text-muted);max-width:680px;line-height:1.65}
+.home-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.home-actions .btn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 18px;border-radius:999px;font-size:13.5px;font-weight:500;border:1px solid var(--border-strong);background:var(--bg-raised);color:var(--text);transition:background-color .15s,border-color .15s,color .15s,box-shadow .15s}
+.home-actions .btn:hover{border-color:var(--mint-deep);color:var(--mint-deep)}
+.home-actions .btn.primary{background:var(--n-900);border-color:var(--n-900);color:var(--text-inverted)}
+.home-actions .btn.primary:hover{background:var(--mint-deep);border-color:var(--mint-deep);color:var(--text-inverted)}
+.home-section-title{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 18px}
+.home-section-title h2{font-family:var(--serif);font-size:22px;font-weight:400;letter-spacing:-.005em}
+.home-section-title .count{font-size:12px;color:var(--text-muted);font-family:var(--f-mono);letter-spacing:.04em}
+.home-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.home-card{display:flex;flex-direction:column;background:var(--bg-raised);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-sm);transition:border-color .18s,box-shadow .18s,transform .18s}
+.home-card:hover{border-color:var(--mint-deep);box-shadow:0 8px 28px rgba(15,40,30,.07);transform:translateY(-2px)}
+.home-card .img-wrap{position:relative;width:100%;aspect-ratio:4/5;background:var(--bg-sunken);overflow:hidden}
+.home-card .img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s ease}
+.home-card:hover .img-wrap img{transform:scale(1.03)}
+.home-card .img-wrap .name-tag{position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;padding:3px 8px;border-radius:999px;backdrop-filter:saturate(120%) blur(2px)}
+.home-card .img-wrap .ar-tag{position:absolute;right:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font-size:10.5px;font-weight:500;padding:3px 8px;border-radius:999px;font-family:var(--f-mono);letter-spacing:.04em}
+.home-card .body{display:flex;flex-direction:column;gap:10px;padding:14px 16px 16px;flex:1;min-height:0}
+.home-card .body .meta{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.home-card .body .meta .title{font-family:var(--serif);font-size:19px;line-height:1.2;color:var(--text)}
+.home-card .body .meta .style-chip{font-size:11px;font-weight:500;color:var(--mint-deep);background:var(--mint-soft);border:1px solid #d6e4d9;padding:3px 8px;border-radius:999px;max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-card .prompt-box{flex:1;background:var(--bg-sunken);border:1px solid var(--border-faint);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.6;color:var(--text);max-height:140px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;scrollbar-width:thin}
+.home-card .prompt-box::-webkit-scrollbar{width:6px}
+.home-card .prompt-box::-webkit-scrollbar-thumb{background:var(--n-200);border-radius:6px}
+.home-card .prompt-box::-webkit-scrollbar-thumb:hover{background:var(--n-300)}
+.home-card .footer-row{display:flex;gap:8px;align-items:center}
+.home-card .use-btn{flex:1;height:36px;border:none;background:var(--n-900);color:var(--text-inverted);border-radius:10px;font-size:12.5px;font-weight:500;transition:background-color .15s}
+.home-card .use-btn:hover{background:var(--mint-deep)}
+.home-card .copy-btn{height:36px;width:36px;border:1px solid var(--border-strong);background:var(--bg-raised);color:var(--text-muted);border-radius:10px;display:inline-flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
+.home-card .copy-btn:hover{color:var(--mint-deep);border-color:var(--mint-deep)}
+.home-card .copy-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.home-empty{padding:48px 16px;text-align:center;color:var(--text-muted);font-size:13px;border:1px dashed var(--border-strong);border-radius:18px;background:var(--bg-sunken)}
+.home-skeleton{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px}
+.home-skeleton .skel{aspect-ratio:4/5;border-radius:20px;background:linear-gradient(100deg,var(--bg-sunken) 30%,var(--bg-hover) 50%,var(--bg-sunken) 70%);background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+.home-footer{padding:36px 0 0;margin-top:48px;border-top:1px solid var(--border);color:var(--text-muted);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.home-status{margin-bottom:16px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (max-width:768px){.home-topbar{padding:12px 16px}.home-main{padding:24px 16px 60px}.home-hero h1{font-size:34px}.home-grid,.home-skeleton{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}}
+.no-key-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn .2s ease}
+.no-key-overlay.hidden{display:none}
+.no-key-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:24px;padding:32px 28px 24px;max-width:380px;width:calc(100vw - 40px);text-align:center;box-shadow:var(--shadow-md),0 16px 48px rgba(0,0,0,.12);animation:scaleIn .25s ease}
+.no-key-card .icon-circle{width:48px;height:48px;border-radius:50%;background:var(--status-err-bg);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px}
+.no-key-card .icon-circle svg{width:22px;height:22px;stroke:#b42318;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.no-key-card h3{font-family:var(--f-serif,var(--f-sans));font-size:20px;font-weight:400;margin-bottom:6px;color:var(--text)}
+.no-key-card .sub{font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.5}
+.no-key-card .qr-wrap{display:inline-block;border:1px solid var(--border);border-radius:16px;padding:12px;background:var(--n-0);margin-bottom:12px}
+.no-key-card .qr-wrap img{display:block;width:180px;height:180px;border-radius:8px}
+.no-key-card .qr-hint{font-size:12px;color:var(--text-muted);margin-bottom:20px}
+.no-key-card .modal-actions{display:flex;gap:10px}
+.no-key-card .modal-actions button{flex:1;height:40px;border-radius:12px;font-size:13px;font-weight:500;border:none;transition:background-color .15s}
+.no-key-card .modal-actions .btn-go-creds{background:var(--n-900);color:var(--text-inverted)}
+.no-key-card .modal-actions .btn-go-creds:hover{background:var(--accent-hover)}
+.no-key-card .modal-actions .btn-close-modal{background:var(--bg-sunken);color:var(--text);border:1px solid var(--border)}
+.no-key-card .modal-actions .btn-close-modal:hover{background:var(--bg-hover)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes scaleIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
 </style>
 </head>
-<body>
-<div class="app">
+<body class="view-home">
+
+<!-- 首页（顶层视图） -->
+<div class="home-shell" id="homeShell">
+  <header class="home-topbar">
+    <div class="brand">
+      <div class="brand-badge">GI</div>
+      <div class="brand-title">
+        <strong>GPT Image 2</strong>
+        <small>Curated Examples</small>
+      </div>
+    </div>
+    <div class="top-links">
+      <button class="link-btn" id="homeReloadExamples" type="button">刷新</button>
+      <button class="link-btn primary" id="homeEnterWorkspace" type="button">进入工作台 →</button>
+    </div>
+  </header>
+  <div class="home-main">
+    <section class="home-hero">
+      <span class="eyebrow">CURATED · 优秀示例</span>
+      <h1>从一张图开始，写下你的提示词。</h1>
+      <p>这里收录了经过验证的画面与对应的完整提示词。挑一张喜欢的，点"使用提示词"会进入工作台，提示词已为你填好。</p>
+      <div class="home-actions">
+        <button class="btn primary" id="homeStartBtn" type="button">直接去工作台生成</button>
+        <button class="btn" id="homeScrollBtn" type="button">浏览示例</button>
+      </div>
+    </section>
+    <div class="home-section-title">
+      <h2>示例画廊</h2>
+      <span class="count" id="homeCount"></span>
+    </div>
+    <div class="status home-status" id="homeStatus"></div>
+    <div id="homeGrid" class="home-grid"></div>
+    <footer class="home-footer">
+      <span>把图片与同名 JSON 放进 <code>优秀示例/</code> 目录即可自动出现在这里。</span>
+      <span>GPT Image 2 · Local Studio</span>
+    </footer>
+  </div>
+</div>
+
+<div class="app hidden" id="workspaceApp">
   <aside class="sidebar">
     <div class="brand">
       <div class="brand-badge">GI</div>
@@ -201,6 +323,9 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
     </div>
 
     <nav class="nav">
+      <button class="nav-btn" id="backHomeBtn" type="button">
+        <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg></span><span>返回首页</span></span>
+      </button>
       <button class="nav-btn active" data-page="generate">
         <span class="left"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v6"></path><path d="M12 15v6"></path><path d="M5.6 5.6l4.2 4.2"></path><path d="M14.2 14.2l4.2 4.2"></path><path d="M3 12h6"></path><path d="M15 12h6"></path><path d="M5.6 18.4l4.2-4.2"></path><path d="M14.2 9.8l4.2-4.2"></path></svg></span><span>生成</span></span>
         <span class="hint">⌘1</span>
@@ -653,6 +778,11 @@ function buildResultCards(items,format,historyId){
     dl.textContent='下载';
     dl.onclick=()=>downloadUrl(img.src,'gpt-image-'+Date.now()+'-'+idx+'.png');
     actions.appendChild(dl);
+    const useRef=document.createElement('button');
+    useRef.className='btn-sm';
+    useRef.textContent='作为参考图';
+    useRef.onclick=()=>useResultAsReference(img.src,format||item.mime,idx);
+    actions.appendChild(useRef);
     if(historyId){
       const open=document.createElement('button');
       open.className='btn-sm';
@@ -665,6 +795,30 @@ function buildResultCards(items,format,historyId){
     grid.appendChild(card);
   });
   return grid;
+}
+
+async function srcToFile(src,fallbackExt,idx){
+  let blob;
+  if(src.startsWith('data:')){
+    const r=await fetch(src);blob=await r.blob();
+  }else{
+    const r=await fetch(src,{cache:'force-cache'});if(!r.ok)throw new Error('图片下载失败');blob=await r.blob();
+  }
+  const mime=blob.type||'image/png';
+  const ext=(fallbackExt&&fallbackExt.includes('/')?fallbackExt.split('/')[1]:fallbackExt)||(mime.split('/')[1])||'png';
+  const name='ref-'+Date.now()+'-'+(idx||0)+'.'+ext;
+  return new File([blob],name,{type:mime});
+}
+async function useResultAsReference(src,fmt,idx){
+  try{
+    const file=await srcToFile(src,fmt,idx);
+    addFilesToSlots([file]);
+    showWorkspace('edit');
+    setStatus('editStatus','已把结果加入参考图（第 1 槽）。','info');
+    setTimeout(()=>clearStatus('editStatus'),2400);
+  }catch(e){
+    setStatus('editStatus','加入参考图失败：'+(e.message||e),'error');
+  }
 }
 
 function renderGenerateResults(historyItem){
@@ -803,7 +957,7 @@ async function runGenerate(){
   const prompt=document.getElementById('generatePrompt').value.trim();
   const quality=document.getElementById('qualitySelect').value;
   const format=document.getElementById('formatSelect').value;
-  if(!key){setStatus('generateStatus','请输入 API Key','error');return}
+  if(!key){showNoKeyModal();return}
   if(!prompt){setStatus('generateStatus','请输入提示词','error');return}
   let finalSize='';
   try{finalSize=resolveGenerateSize()}catch(e){setStatus('generateStatus',e.message||'自定义尺寸不合法','error');return}
@@ -871,7 +1025,7 @@ async function runEdit(){
   const key=document.getElementById('apiKey').value.trim();
   const prompt=document.getElementById('editPrompt').value.trim();
   const quality=document.getElementById('editQualitySelect').value;
-  if(!key){setStatus('editStatus','请输入 API Key','error');return}
+  if(!key){showNoKeyModal();return}
   const files=getUploadedFiles();
   if(!files.length){setStatus('editStatus','请上传至少一张参考图','error');return}
   if(!prompt){setStatus('editStatus','请输入修改描述','error');return}
@@ -1045,8 +1199,13 @@ function renderSlots(){
 }
 
 function bindEvents(){
-  document.querySelectorAll('.nav-btn').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
+  document.querySelectorAll('.nav-btn[data-page]').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
   document.getElementById('newTaskBtn').addEventListener('click',()=>switchPage('generate'));
+  document.getElementById('backHomeBtn').addEventListener('click',showHome);
+  document.getElementById('homeEnterWorkspace').addEventListener('click',()=>showWorkspace('generate'));
+  document.getElementById('homeStartBtn').addEventListener('click',()=>showWorkspace('generate'));
+  document.getElementById('homeReloadExamples').addEventListener('click',()=>loadExamples(true));
+  document.getElementById('homeScrollBtn').addEventListener('click',()=>{const g=document.getElementById('homeGrid');if(g)g.scrollIntoView({behavior:'smooth',block:'start'})});
   document.getElementById('generateBtn').addEventListener('click',runGenerate);
   document.getElementById('editBtn').addEventListener('click',runEdit);
   document.getElementById('apiKey').addEventListener('change',e=>{localStorage.setItem(STORAGE_KEYS.key,e.target.value.trim());syncCredentialViews();fetchQuota(e.target.value.trim())});
@@ -1093,10 +1252,163 @@ function bindEvents(){
     if(files.length)addFilesToSlots(files);
   });
   document.addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&['1','2','3','4','5'].includes(e.key)){e.preventDefault();switchPage(['generate','edit','tasks','credentials','settings'][Number(e.key)-1])}
+    if((e.ctrlKey||e.metaKey)&&['1','2','3','4','5'].includes(e.key)){e.preventDefault();showWorkspace(['generate','edit','tasks','credentials','settings'][Number(e.key)-1])}
     if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&state.currentPage==='generate'){e.preventDefault();runGenerate()}
     if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&state.currentPage==='edit'){e.preventDefault();runEdit()}
   });
+  document.getElementById('noKeyCloseBtn').addEventListener('click',closeNoKeyModal);
+  document.getElementById('noKeyGoCredsBtn').addEventListener('click',()=>{closeNoKeyModal();showWorkspace('credentials')});
+  document.getElementById('noKeyModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeNoKeyModal()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNoKeyModal()});
+}
+
+function showNoKeyModal(){document.getElementById('noKeyModal').classList.remove('hidden')}
+function closeNoKeyModal(){document.getElementById('noKeyModal').classList.add('hidden')}
+
+const homeState={examples:null,loading:false};
+function showHome(){
+  document.body.classList.add('view-home');
+  document.getElementById('homeShell').classList.remove('hidden');
+  document.getElementById('workspaceApp').classList.add('hidden');
+  if(!homeState.examples&&!homeState.loading)loadExamples();
+}
+function showWorkspace(page){
+  document.body.classList.remove('view-home');
+  document.getElementById('homeShell').classList.add('hidden');
+  document.getElementById('workspaceApp').classList.remove('hidden');
+  switchPage(page||state.currentPage||'generate');
+}
+async function loadExamples(force){
+  if(homeState.loading)return;
+  if(homeState.examples&&!force){renderExamples(homeState.examples);return}
+  const grid=document.getElementById('homeGrid');
+  homeState.loading=true;
+  grid.innerHTML='<div class="home-skeleton">'+Array.from({length:8}).map(()=>'<div class="skel"></div>').join('')+'</div>';
+  clearStatus('homeStatus');
+  try{
+    const r=await fetch('/api/examples');
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json();
+    homeState.examples=Array.isArray(j.items)?j.items:[];
+    renderExamples(homeState.examples);
+  }catch(e){
+    grid.innerHTML='';
+    setStatus('homeStatus','加载示例失败：'+(e.message||e),'error');
+  }finally{
+    homeState.loading=false;
+  }
+}
+function renderExamples(items){
+  const grid=document.getElementById('homeGrid');
+  const countEl=document.getElementById('homeCount');
+  if(countEl)countEl.textContent=items.length?items.length+' 个':'';
+  if(!items.length){
+    grid.innerHTML='<div class="home-empty">还没有示例文件。请把图片与同名 JSON 放到 优秀示例/ 目录。</div>';
+    return;
+  }
+  grid.innerHTML='';
+  items.forEach(item=>{
+    const card=document.createElement('article');
+    card.className='home-card';
+    const ar=escapeHtml(item.aspectRatio||'');
+    const styleStr=Array.isArray(item.style)?item.style.join('，'):(typeof item.style==='string'?item.style:'');
+    const style=escapeHtml(styleStr.split(/[，,。]/)[0].trim()||'示例');
+    card.innerHTML=
+      '<div class="img-wrap">'
+      +'<img loading="lazy" src="'+escapeHtml(item.image)+'" alt="'+escapeHtml(item.name)+'">'
+      +'<span class="name-tag">'+escapeHtml(item.name)+'</span>'
+      +(ar?'<span class="ar-tag">'+ar+'</span>':'')
+      +'</div>'
+      +'<div class="body">'
+      +'<div class="meta"><div class="title">'+escapeHtml(item.name)+'</div><div class="style-chip" title="'+escapeHtml(styleStr)+'">'+style+'</div></div>'
+      +'<div class="prompt-box">'+escapeHtml(item.prompt||'')+'</div>'
+      +'<div class="footer-row">'
+      +'<button class="use-btn" type="button">使用提示词</button>'
+      +'<button class="copy-btn" type="button" title="复制提示词" aria-label="复制提示词"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h9"></path></svg></button>'
+      +'</div>'
+      +'</div>';
+    card.querySelector('.use-btn').addEventListener('click',()=>useExamplePrompt(item));
+    card.querySelector('.copy-btn').addEventListener('click',async()=>{
+      try{
+        await navigator.clipboard.writeText(item.prompt||'');
+        setStatus('homeStatus','已复制 '+item.name+' 的提示词','success');
+        setTimeout(()=>clearStatus('homeStatus'),1600);
+      }catch{
+        setStatus('homeStatus','复制失败，请手动选择文本','error');
+      }
+    });
+    grid.appendChild(card);
+  });
+}
+function useExamplePrompt(item){
+  const ta=document.getElementById('generatePrompt');
+  ta.value=item.prompt||'';
+  document.getElementById('generateCounter').textContent=ta.value.length+' / 4000';
+  showWorkspace('generate');
+  applyExampleSize(item).catch(()=>{});
+  setTimeout(()=>{ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)},0);
+  setStatus('generateStatus','已载入「'+item.name+'」的提示词与尺寸。','info');
+  setTimeout(()=>clearStatus('generateStatus'),2600);
+}
+
+const SIZE_PRESETS=[
+  {value:'1024x1024',w:1024,h:1024},
+  {value:'2048x2048',w:2048,h:2048},
+  {value:'1536x1024',w:1536,h:1024},
+  {value:'1024x1536',w:1024,h:1536},
+  {value:'2048x1152',w:2048,h:1152},
+  {value:'1152x2048',w:1152,h:2048},
+  {value:'3840x2160',w:3840,h:2160},
+  {value:'2160x3840',w:2160,h:3840},
+  {value:'2520x1080',w:2520,h:1080},
+  {value:'3360x1440',w:3360,h:1440},
+];
+function parseRatioFromText(str){
+  if(!str)return null;
+  const m=String(str).match(/(\d{1,2})\s*[:：]\s*(\d{1,2})/);
+  if(!m)return null;
+  const w=Number(m[1]),h=Number(m[2]);
+  if(!w||!h)return null;
+  return w/h;
+}
+function pickSizeForRatio(ratio){
+  if(!ratio||!isFinite(ratio))return {value:'1024x1024'};
+  let best=null,bestDiff=Infinity;
+  for(const p of SIZE_PRESETS){
+    const diff=Math.abs((p.w/p.h)-ratio)/(p.w/p.h);
+    if(diff<bestDiff){bestDiff=diff;best=p}
+  }
+  if(best&&bestDiff<=0.05)return {value:best.value};
+  let w,h;
+  if(ratio>=1){w=Math.min(2048,Math.round(1536*ratio/1));h=Math.round(w/ratio)}
+  else{h=Math.min(2048,Math.round(1536/Math.max(ratio,0.25)));w=Math.round(h*ratio)}
+  w=Math.max(256,Math.min(3840,Math.round(w/8)*8));
+  h=Math.max(256,Math.min(3840,Math.round(h/8)*8));
+  return {value:'custom',custom:w+'x'+h};
+}
+function loadImageSize(url){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>resolve({w:img.naturalWidth,h:img.naturalHeight});
+    img.onerror=()=>resolve(null);
+    img.src=url;
+  });
+}
+async function applyExampleSize(item){
+  let ratio=parseRatioFromText(item.aspectRatio);
+  if(!ratio&&item.image){
+    const dim=await loadImageSize(item.image);
+    if(dim&&dim.w&&dim.h)ratio=dim.w/dim.h;
+  }
+  if(!ratio)return;
+  const pick=pickSizeForRatio(ratio);
+  const sel=document.getElementById('sizeSelect');
+  sel.value=pick.value;
+  state.selectedSize=pick.value;
+  if(pick.value==='custom'){
+    document.getElementById('customSizeInput').value=pick.custom;
+  }
+  toggleCustomSizeField();
 }
 
 function init(){
@@ -1128,9 +1440,25 @@ function init(){
     renderTaskDetail(state.activeTask.id);
     restoreActiveTask();
   }
+  document.getElementById('pageTitle').textContent=PAGE_META[state.currentPage].title;
+  document.getElementById('pageSubtitle').textContent=PAGE_META[state.currentPage].subtitle;
+  showHome();
 }
 
 document.addEventListener('DOMContentLoaded',init);
 </script>
+<div class="no-key-overlay hidden" id="noKeyModal">
+  <div class="no-key-card">
+    <div class="icon-circle"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+    <h3>请输入凭证后方能继续</h3>
+    <p class="sub">使用 GPT Image 需要配置 API Key<br>扫码添加好友可领取 <strong>10 张</strong> 免费额度</p>
+    <div class="qr-wrap"><img src="/myqrcode.png" alt="二维码"></div>
+    <p class="qr-hint">微信扫码添加好友，获取 API Key</p>
+    <div class="modal-actions">
+      <button class="btn-close-modal" id="noKeyCloseBtn" type="button">稍后再说</button>
+      <button class="btn-go-creds" id="noKeyGoCredsBtn" type="button">去设置凭证</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
