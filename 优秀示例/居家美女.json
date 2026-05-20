@@ -1,0 +1,10 @@
+{
+  "main_prompt": "A lively and bright portrait of Liu Yifei, radiant glowing skin with natural makeup, in a comfortable minimalist modern indoor apartment space. She is wearing black tight-fitting sportswear slightly open at the front, facing the camera with her gaze directed towards the TV as if capturing a dynamic selfie-style photo. She is playfully running her hand through her beautiful curly hair with slightly fluffy roots. In the background, a large LCD screen displays a frozen scene from Tom and Jerry where Tom has red heart-shaped eyes and his tongue sticking out. Soft warm indoor lighting creating a vibrant social media dynamic photo effect, simple apartment decor, high resolution, realistic skin texture and fabric details, photorealistic, no text",
+  "style": "活泼明快的社交媒体风格肖像写真，高度写实摄影，柔和自然光影，现代简约室内氛围，电影级动态感，高分辨率逼真渲染",
+  "key_elements": "刘亦菲肖像、容光焕发肌肤、自然妆容、黑色紧身运动服略敞开、卷发优美发根蓬松、手拨弄头发、面向镜头目光投向电视、巨大液晶屏《猫和老鼠》汤姆红心眼伸舌头、简约现代公寓、柔和室内灯光、动态照片效果",
+  "composition": "竖版特写到中景构图，人物为主体面向观众，背景电视屏幕自然融入，动态抓拍感，亲切生活化视角",
+  "lighting_and_colors": "柔和温暖室内灯光，明快活泼色调，自然高光与皮肤光泽，舒适家居氛围，社交媒体照片质感",
+  "details": "逼真皮肤纹理与细腻毛孔、织物褶皱与紧身服装质感、头发自然卷曲与动态感、电视画面细节、真实室内装饰、无文字、无水印",
+  "aspect_ratio": "9:16 或 4:5 竖版社交媒体动态照片比例",
+  "negative_prompt": "文字、水印、logo、模糊、变形、低分辨率、过曝、冷色调、夸张妆容、杂乱背景、卡通风格、老化、丑陋、塑料皮肤、不自然姿势"
+}

@@ -1,0 +1,10 @@
+{
+  "main_prompt": "Cinematic indoor portrait, elegant urban lady, quiet relaxed posture, fair delicate skin with natural soft radiance, gentle soft eyes, refined facial features, fluffy layered hairstyle, exquisite soft lace home loungewear, warm cozy bedroom ambient light, soft contour backlight, hazy bokeh background, high-end magazine shooting texture, mild contrast, quiet and tender atmosphere, hyper-realistic human skin detail, photorealistic, delicate beauty, soft expression, natural indoor setting",
+  "style": "cinematic magazine portrait style, hyper-realistic photography, soft filmic look, high-end fashion editorial, warm intimate atmosphere, exceptional skin texture and lighting detail",
+  "key_elements": "elegant urban lady with refined features, gentle soft eyes, fluffy layered hairstyle, fair delicate glowing skin, soft lace loungewear, relaxed quiet posture, warm cozy bedroom lighting",
+  "composition": "portrait orientation or horizontal close-up, subject centered with relaxed posture, focus on face and upper body, soft bokeh background emphasizing the figure",
+  "lighting_and_colors": "warm cozy bedroom ambient light, soft contour backlight creating gentle rim lighting, mild contrast, natural soft radiance on skin, tender and quiet color palette with warm tones",
+  "details": "hyper-realistic human skin pores and texture, delicate fabric details on lace loungewear, soft hair strands, subtle eye highlights, realistic depth of field, high-end retouching without over-smoothing",
+  "aspect_ratio": "portrait (2:3 or 3:4) or cinematic horizontal (16:9)",
+  "negative_prompt": "harsh lighting, strong contrast, overexposed, cold tones, heavy makeup, exaggerated features, deformed anatomy, low quality, blurry, text, watermark, cartoon, anime, plastic skin, flat lighting, busy background"
+}

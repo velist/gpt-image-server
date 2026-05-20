@@ -1,0 +1,9 @@
+{
+  "main_prompt": "A surreal yet photorealistic ultra-telephoto geographic photograph with extreme spatial compression, vertical composition, stacked world landmarks aligned along a single line of sight from bottom to top. At the bottom: Shanghai skyline with Shanghai Tower, Shanghai World Financial Center, and Oriental Pearl Tower. In the middle foreground: layered hills, temples, and atmospheric mountain ranges. In the center: the Potala Palace on a mountain ridge, majestic and sharply detailed. Above it: the Taj Mahal with white dome and minarets. Higher above: the Great Pyramid of Khufu in a dry desert landscape. At the very top: the Statue of Liberty near a bay with a distant city skyline. Warm sunrise or sunset light, cinematic haze, atmospheric perspective, natural colors, documentary realism, national geographic style, ultra detailed architecture, realistic terrain transitions, compressed depth, 800mm–1200mm telephoto lens look, no collage seams, no fantasy floating objects, no illustration, no text, no watermark",
+  "style": "超现实却高度写实的超长焦地理摄影，国家地理杂志风格，极端空间压缩效果，电影级氛围，光影真实，纪录片质感",
+  "key_elements": "上海天际线（上海中心、上海环球金融中心、东方明珠）、层层叠叠的山丘寺庙山脉、布达拉宫山脊、泰姬陵白色穹顶与宣礼塔、胡夫金字塔沙漠景观、自由女神像与海湾城市天际线、暖调日出/日落光、电影 haze 与大气透视、自然色彩过渡",
+  "composition": "竖版构图，从下到上垂直堆叠地标，单一线视压缩透视，极致深度压缩，真实地形自然过渡，无悬浮感",
+  "lighting_and_colors": "温暖日出或日落光线，柔和金橙渐变，天空与地标自然光影，电影级薄雾与大气透视，真实自然色调",
+  "details": "建筑超高细节与纹理、山脉地形真实层次、长焦镜头压缩效果、照片级真实感、无接缝、无文字、无水印",
+  "negative_prompt": "拼贴痕迹、悬浮物体、幻想元素、插画风格、卡通、低分辨率、模糊建筑、冷色调、现代无关元素、文字、水印、明显接缝"
+}

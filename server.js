@@ -362,7 +362,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Examples gallery (优秀示例) ---
-const EXAMPLES_DIR = path.resolve(__dirname, '..', '优秀示例');
+const EXAMPLES_DIR = path.join(__dirname, '优秀示例');
 app.use('/examples-assets', express.static(EXAMPLES_DIR, {
   fallthrough: true,
   maxAge: '7d',

@@ -1,0 +1,10 @@
+{
+  "main_prompt": "Dark fantasy movie poster style, double exposure composition, large side profile silhouette of Tifa Lockhart as the outer outline, silhouette interior contains multi-layered narrative scenes, center is full standing pose of Tifa in her iconic red outfit with black gloves and suspenders, athletic and powerful stance. Bottom: intense battle scenes with martial arts punches, materia energy effects, and collapsing reactor or Sector 7 destruction. Top: world environment with Nibelheim mountains, burning village, Midgar cityscape and Seventh Heaven bar. High contrast lighting, dramatic strong shadows, epic composition, ink splashes, smoke particles, dust texture, rough gritty texture. Character name 'Tifa Lockhart' centered at lower middle, classic line 'I fight for the people I love' in a suitable dramatic position. Painting texture, ultra detailed, cinematic concept art, 4K, masterpiece",
+  "style": "黑暗奇幻电影海报风格，双重曝光构图，史诗概念艺术，高对比光影与强烈阴影，绘画质感，电影级细节，粗粝纹理，墨水飞溅与烟雾颗粒",
+  "key_elements": "最终幻想7蒂法·洛克哈特、长直黑发、红色吊带背心与短裙、黑色手套、健美身材、侧脸大型剪影轮廓、内部叙事层（尼布尔海姆、米德加、第七天堂、雪崩战斗）、中心完整站姿、底部战斗场景、上方世界环境、物质能量效果",
+  "composition": "竖版海报构图，大型侧脸剪影作为外轮廓，中心完整人物站姿，下方战斗动态，上方世界观场景，双重曝光多层叙事，史诗平衡布局",
+  "lighting_and_colors": "高对比戏剧光影，强烈阴影与边缘光，深红与暗金色调，黑暗奇幻氛围，烟雾与颗粒增强深度",
+  "details": "超精细面部与服装纹理、动态战斗动作、建筑与自然环境细节、墨水飞溅与灰尘质感、文字自然融入、无缝双重曝光、电影级概念艺术",
+  "aspect_ratio": "2:3 或 9:16 竖版电影海报比例",
+  "negative_prompt": "low quality, blurry, deformed anatomy, extra limbs, bad hands, text errors, watermark, logo, modern elements, bright cartoon style, overexposed, flat lighting, collage seams, plastic skin, ugly, poorly drawn face, extra fingers"
+}
