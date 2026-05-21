@@ -1,0 +1,27 @@
+User-agent: *
+Allow: /
+Allow: /prompts.html
+Allow: /examples-assets/
+
+Disallow: /admin.html
+Disallow: /api/
+Disallow: /api/admin/
+
+# 主要搜索引擎单独放行
+User-agent: Googlebot
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+User-agent: Baiduspider
+Allow: /
+Disallow: /admin.html
+Disallow: /api/
+
+Sitemap: https://gpt-image-server-xhnm.onrender.com/sitemap.xml
+Host: https://gpt-image-server-xhnm.onrender.com

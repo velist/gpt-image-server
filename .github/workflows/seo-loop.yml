@@ -1,0 +1,85 @@
+name: SEO Loop
+
+on:
+  schedule:
+    # 每天 UTC 02:17（北京时间 10:17）跑一次，避开整点高峰
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seo-loop
+  cancel-in-progress: false
+
+jobs:
+  rebuild-seo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rebuild prompts.html & sitemap.xml
+        run: node scripts/build-seo.js
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit & push (retry on conflict)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          if [[ -z "$(git status --porcelain public/prompts.html public/sitemap.xml)" ]]; then
+            echo "[seo] no changes to commit"
+            exit 0
+          fi
+          git add public/prompts.html public/sitemap.xml
+          git commit -m "chore(seo): daily refresh prompts.html & sitemap lastmod [skip ci]"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin master && git push origin HEAD:master; then
+              echo "[seo] pushed on attempt $i"
+              exit 0
+            fi
+            echo "[seo] push failed on attempt $i, retrying in 15s..."
+            sleep 15
+          done
+          echo "[seo] push failed after 5 attempts"
+          exit 1
+
+      - name: Ping IndexNow (Bing / Yandex / Naver)
+        if: success()
+        env:
+          INDEXNOW_KEY: f6d08122835fe6833c9a74515ef01896
+        run: |
+          curl -fsSL -X POST \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"host\": \"gpt-image-server-xhnm.onrender.com\",
+              \"key\": \"$INDEXNOW_KEY\",
+              \"keyLocation\": \"https://gpt-image-server-xhnm.onrender.com/$INDEXNOW_KEY.txt\",
+              \"urlList\": [
+                \"https://gpt-image-server-xhnm.onrender.com/\",
+                \"https://gpt-image-server-xhnm.onrender.com/prompts.html\",
+                \"https://gpt-image-server-xhnm.onrender.com/sitemap.xml\"
+              ]
+            }" \
+            https://api.indexnow.org/IndexNow || echo "[seo] IndexNow ping failed (non-fatal)"
+
+      - name: Trigger Render deploy (optional)
+        if: success() && env.RENDER_DEPLOY_HOOK != ''
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -fsSL -X POST "$RENDER_DEPLOY_HOOK" || echo "[seo] Render hook failed (non-fatal)"
