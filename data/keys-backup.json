@@ -1,15 +1,39 @@
 [
   {
+    "id": "fe451fb5-c59e-460e-a192-ae7b0b81245a",
+    "key": "sk-gi-cdb4caf0bc1c8d8adf8523e508ea24d3e3c10ab321bfd665",
+    "name": "清风",
+    "maxImages": 10,
+    "usedImages": 0,
+    "remaining": 10,
+    "expiresAt": null,
+    "createdAt": "2026-05-22 03:09:29",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
+    "id": "5fcb03f3-47b2-4119-a2c3-d08e27ab8f9c",
+    "key": "sk-gi-fe0473ccc6195c56ce6a779df55bf172ebb128e0eba8b7e9",
+    "name": "鱼香",
+    "maxImages": 10,
+    "usedImages": 0,
+    "remaining": 10,
+    "expiresAt": null,
+    "createdAt": "2026-05-21 08:05:58",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "05cce237-66c2-4ced-a54c-556b406f6dad",
     "key": "sk-gi-098cc2a4bad1b27b34aad1f1ace76e221daad4f5a5417765",
     "name": "系统 #5",
     "maxImages": -1,
-    "usedImages": 174,
+    "usedImages": 233,
     "remaining": -1,
     "expiresAt": null,
     "createdAt": "2026-05-07 15:36:46",
     "enabled": true,
-    "lastUsedAt": "2026-05-19T16:30:38.220Z"
+    "lastUsedAt": "2026-05-22T03:15:25.670Z"
   },
   {
     "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
@@ -64,12 +88,12 @@
     "key": "sk-gi-4f0fc2b44b7caa19f3de54c9be6fb9d17caf8f9dac43aa5b",
     "name": "苏",
     "maxImages": 10,
-    "usedImages": 6,
-    "remaining": 4,
+    "usedImages": 8,
+    "remaining": 2,
     "expiresAt": null,
     "createdAt": "2026-04-29 03:56:17",
     "enabled": true,
-    "lastUsedAt": "2026-04-29T07:57:04.174Z"
+    "lastUsedAt": "2026-05-21T08:19:12.550Z"
   },
   {
     "id": "c23c3529-05e2-4a5d-a7a7-de25a7c626c6",
@@ -160,12 +184,12 @@
     "key": "sk-gi-0004d1b26c62033f9b5a6c18c13f04bc9b6319b19866ff99",
     "name": "钊曼",
     "maxImages": 100,
-    "usedImages": 60,
-    "remaining": 40,
+    "usedImages": 96,
+    "remaining": 4,
     "expiresAt": null,
     "createdAt": "2026-04-25 01:25:11",
     "enabled": true,
-    "lastUsedAt": "2026-05-18T08:52:35.669Z"
+    "lastUsedAt": "2026-05-22T02:18:38.460Z"
   },
   {
     "id": "627abcfc-ab46-4cd3-a402-c814bbc6118e",
