@@ -1,5 +1,17 @@
 [
   {
+    "id": "b2176e2b-c4e1-4a1e-acb9-2cb2c1df7b5d",
+    "key": "sk-gi-2ff994498929572992abf6e6556cf5cb608ac697fa57891e",
+    "name": "吾",
+    "maxImages": 10,
+    "usedImages": 3,
+    "remaining": 7,
+    "expiresAt": null,
+    "createdAt": "2026-05-26 09:06:12",
+    "enabled": true,
+    "lastUsedAt": "2026-05-26T09:19:52.646Z"
+  },
+  {
     "id": "fe451fb5-c59e-460e-a192-ae7b0b81245a",
     "key": "sk-gi-cdb4caf0bc1c8d8adf8523e508ea24d3e3c10ab321bfd665",
     "name": "清风",
@@ -28,12 +40,12 @@
     "key": "sk-gi-098cc2a4bad1b27b34aad1f1ace76e221daad4f5a5417765",
     "name": "系统 #5",
     "maxImages": -1,
-    "usedImages": 370,
+    "usedImages": 374,
     "remaining": -1,
     "expiresAt": null,
     "createdAt": "2026-05-07 15:36:46",
     "enabled": true,
-    "lastUsedAt": "2026-05-25T16:57:21.384Z"
+    "lastUsedAt": "2026-05-26T08:35:49.149Z"
   },
   {
     "id": "063bf517-e97d-4237-9c9c-e2ccebb7476a",
