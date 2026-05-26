@@ -130,7 +130,54 @@ function allKeysJSON() {
 }
 
 const TASK_TTL_MS = 60 * 60 * 1000;
-const TERMINAL_TASK_RETENTION_MS = 24 * 60 * 60 * 1000;
+const TERMINAL_TASK_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+
+// --- Result images persistence ---
+const RESULTS_DIR = path.join(__dirname, 'data', 'results');
+if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
+
+function mimeExtFromFormat(format) {
+  const f = String(format || '').toLowerCase();
+  if (f === 'jpeg' || f === 'jpg') return 'jpg';
+  if (f === 'webp') return 'webp';
+  return 'png';
+}
+
+// Decode b64_json images to disk, return a result_json string with url refs.
+function persistResultImagesToDisk(taskId, upstreamBody, outputFormat) {
+  let parsed;
+  try { parsed = JSON.parse(upstreamBody); } catch { return upstreamBody; }
+  if (!parsed || !Array.isArray(parsed.data)) return upstreamBody;
+  const ext = mimeExtFromFormat(outputFormat);
+  const newData = parsed.data.map((item, idx) => {
+    if (item && typeof item.b64_json === 'string' && item.b64_json.length > 0) {
+      try {
+        const buf = Buffer.from(item.b64_json, 'base64');
+        const fname = `${taskId}-${idx}.${ext}`;
+        fs.writeFileSync(path.join(RESULTS_DIR, fname), buf);
+        const rest = { ...item };
+        delete rest.b64_json;
+        return { ...rest, url: `/results-files/${fname}` };
+      } catch (err) {
+        console.error('[RESULTS] write failed for task=' + taskId + ' idx=' + idx + ':', err.message);
+        return item;
+      }
+    }
+    return item;
+  });
+  return JSON.stringify({ ...parsed, data: newData });
+}
+
+function deleteResultFilesForTask(taskId) {
+  try {
+    const prefix = taskId + '-';
+    for (const f of fs.readdirSync(RESULTS_DIR)) {
+      if (f.startsWith(prefix)) {
+        try { fs.unlinkSync(path.join(RESULTS_DIR, f)); } catch {}
+      }
+    }
+  } catch {}
+}
 
 function nowIso() {
   return new Date().toISOString();
@@ -165,6 +212,8 @@ function markExpiredTasks() {
 
 function deleteOldTerminalTasks() {
   const cutoff = new Date(Date.now() - TERMINAL_TASK_RETENTION_MS).toISOString();
+  const toDel = db.prepare("SELECT id FROM generate_tasks WHERE status IN ('done','error','expired') AND updated_at <= ?").all(cutoff);
+  for (const row of toDel) deleteResultFilesForTask(row.id);
   db.prepare("DELETE FROM generate_tasks WHERE status IN ('done','error','expired') AND updated_at <= ?")
     .run(cutoff);
 }
@@ -367,6 +416,15 @@ app.use('/examples-assets', express.static(EXAMPLES_DIR, {
   fallthrough: true,
   maxAge: '7d',
 }));
+
+// --- Persisted result images (b64 落盘后通过 URL 访问) ---
+app.use('/results-files', express.static(RESULTS_DIR, {
+  fallthrough: false,
+  maxAge: '7d',
+  setHeaders(res) {
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  },
+}));
 app.get('/api/examples', (req, res) => {
   try {
     if (!fs.existsSync(EXAMPLES_DIR)) return res.json({ items: [] });
@@ -446,6 +504,13 @@ function proxyRequest(targetPath, method, headers, body) {
       timeout: 300000
     };
     let responseStarted = false;
+    const onTerminalError = err => {
+      if (responseStarted) {
+        console.error('[proxy] late socket/req error:', err && (err.code || err.message));
+        return;
+      }
+      reject(err);
+    };
     const req = mod.request(opts, res => {
       responseStarted = true;
       const chunks = [];
@@ -464,9 +529,10 @@ function proxyRequest(targetPath, method, headers, body) {
         }
       });
     });
-    req.on('error', err => {
-      if (responseStarted) return; // response already handled
-      reject(err);
+    req.on('error', onTerminalError);
+    // Guard against unhandled TLSSocket 'error' (EPIPE on write) that crashes the process.
+    req.on('socket', socket => {
+      socket.on('error', onTerminalError);
     });
     req.on('timeout', () => { req.destroy(); reject(new Error('Upstream timeout')); });
     if (body) req.write(body);
@@ -508,7 +574,8 @@ async function runGenerateTask(taskId, keyId, body) {
       const responseBody = result.body.toString('utf8');
       const parsed = JSON.parse(responseBody);
       console.log(`[GENERATE] task=${taskId} success, upstream returned ${(parsed.data||[]).length} images`);
-      finishGenerateTaskSuccess(taskId, keyId, responseBody);
+      const persistedJson = persistResultImagesToDisk(taskId, responseBody, body.output_format);
+      finishGenerateTaskSuccess(taskId, keyId, persistedJson);
       await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
     } else {
       let errorMessage = '';
@@ -655,7 +722,10 @@ async function runEditTask(taskId, keyId, filePath) {
         const parsed = JSON.parse(responseBody);
         console.log(`[EDIT] task=${taskId} success, upstream returned ${(parsed.data||[]).length} images`);
       } catch {}
-      finishGenerateTaskSuccess(taskId, keyId, responseBody);
+      let editOutputFormat = 'png';
+      try { editOutputFormat = JSON.parse(task.request_json).output_format || 'png'; } catch {}
+      const persistedJson = persistResultImagesToDisk(taskId, responseBody, editOutputFormat);
+      finishGenerateTaskSuccess(taskId, keyId, persistedJson);
       // finishGenerateTaskSuccess already bumps used_images, just need GitHub persist
       await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
     } else {
