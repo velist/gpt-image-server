@@ -1,5 +1,17 @@
 [
   {
+    "id": "cffcedf9-90f4-4938-b2fc-f70bd682b611",
+    "key": "sk-gi-9fb699c17e106e841601ae0e6f78b316f888472622d51556",
+    "name": "菜菜",
+    "maxImages": 100,
+    "usedImages": 0,
+    "remaining": 100,
+    "expiresAt": null,
+    "createdAt": "2026-06-05 12:42:13",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "b2176e2b-c4e1-4a1e-acb9-2cb2c1df7b5d",
     "key": "sk-gi-2ff994498929572992abf6e6556cf5cb608ac697fa57891e",
     "name": "吾",
