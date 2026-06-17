@@ -347,34 +347,43 @@ async function updateGitHubKeyBackup() {
     return false;
   }
 
-  try {
-    const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
-    const headers = {
-      'Authorization': `Bearer ${GITHUB_TOKEN}`,
-      'Accept': 'application/vnd.github+json',
-      'User-Agent': 'gpt-image-server'
-    };
-    let sha;
-    const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
-    if (current.ok) sha = (await current.json()).sha;
-    else if (current.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
-    else if (current.status !== 404) throw new Error(`GitHub 读取当前备份失败: HTTP ${current.status}`);
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(keyContent).toString('base64'), sha })
-    });
-    if (!res.ok) {
-      if (res.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
-      throw new Error(`GitHub 写入备份失败: HTTP ${res.status}`);
+  // Retry up to 3 times with exponential backoff
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
+      const headers = {
+        'Authorization': `Bearer ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'gpt-image-server'
+      };
+      let sha;
+      const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
+      if (current.ok) sha = (await current.json()).sha;
+      else if (current.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
+      else if (current.status !== 404) throw new Error(`GitHub 读取当前备份失败: HTTP ${current.status}`);
+      const res = await fetch(url, {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(keyContent).toString('base64'), sha })
+      });
+      if (!res.ok) {
+        if (res.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
+        if (res.status === 409) throw new Error('GitHub 备份冲突(409)，远端已被其他进程更新');
+        throw new Error(`GitHub 写入备份失败: HTTP ${res.status}`);
+      }
+      console.log('[KEY BACKUP] GitHub 备份成功');
+      return true;
+    } catch (err) {
+      console.error(`[KEY BACKUP] GitHub 同步失败 (第${attempt}/3次):`, err.message);
+      if (attempt < 3) {
+        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
+        console.error(`[KEY BACKUP] ${delay/1000}s 后重试...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
     }
-    console.log('[KEY BACKUP] GitHub 备份成功');
-    return true;
-  } catch (err) {
-    console.error('[KEY BACKUP] GitHub 同步失败:', err.message);
-    console.error('[KEY BACKUP] Key 数据仅保存在本地，重新部署后会丢失！');
-    return false;
   }
+  console.error('[KEY BACKUP] 3次重试均失败，Key 数据仅保存在本地，重新部署后会丢失！');
+  return false;
 }
 
 async function persistKeysToGitHub() {
