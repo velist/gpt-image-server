@@ -857,6 +857,12 @@ let state={
 };
 
 function uid(){return 'local_'+Date.now()+'_'+Math.random().toString(16).slice(2,8)}
+function validateKeyForFetch(key){
+  if(!key)return '请输入 API Key';
+  if(/[^\x00-\x7F]/.test(key))return 'API Key 包含非法字符，请检查是否复制了多余的空格或中文';
+  if(!key.startsWith('sk-gi-'))return 'API Key 格式不正确，应以 sk-gi- 开头';
+  return null;
+}
 function saveJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
 function readJSON(key,fallback){try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch{return fallback}}
 function stripLargeResultData(item){
@@ -921,6 +927,8 @@ function loadActiveTask(){state.activeTask=readJSON(STORAGE_KEYS.activeTask,null
 
 async function fetchQuota(key){
   if(!key||!key.startsWith('sk-gi-')){document.getElementById('quotaText').textContent='—';return}
+  const err=validateKeyForFetch(key);
+  if(err){document.getElementById('quotaText').textContent='格式错误';return}
   try{
     const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});
     if(!r.ok){document.getElementById('quotaText').textContent='不可用';return}
@@ -1140,6 +1148,8 @@ async function runGenerate(){
   const quality=document.getElementById('qualitySelect').value;
   const format=document.getElementById('formatSelect').value;
   if(!key){showNoKeyModal();return}
+  const keyErr=validateKeyForFetch(key);
+  if(keyErr){setStatus('generateStatus',keyErr,'error');return}
   if(!prompt){setStatus('generateStatus','请输入提示词','error');return}
   let finalSize='';
   try{finalSize=resolveGenerateSize()}catch(e){setStatus('generateStatus',e.message||'自定义尺寸不合法','error');return}
@@ -1208,6 +1218,8 @@ async function runEdit(){
   const prompt=document.getElementById('editPrompt').value.trim();
   const quality=document.getElementById('editQualitySelect').value;
   if(!key){showNoKeyModal();return}
+  const keyErr=validateKeyForFetch(key);
+  if(keyErr){setStatus('editStatus',keyErr,'error');return}
   const files=getUploadedFiles();
   if(!files.length){setStatus('editStatus','请上传至少一张参考图','error');return}
   if(!prompt){setStatus('editStatus','请输入修改描述','error');return}
@@ -1396,7 +1408,7 @@ function bindEvents(){
   document.getElementById('apiKey').addEventListener('input',e=>{document.getElementById('credentialInput').value=e.target.value;syncCredentialViews()});
   document.getElementById('credentialInput').addEventListener('input',e=>{document.getElementById('apiKey').value=e.target.value;syncCredentialViews()});
   document.getElementById('saveCredentialBtn').addEventListener('click',()=>{const key=document.getElementById('credentialInput').value.trim();document.getElementById('apiKey').value=key;localStorage.setItem(STORAGE_KEYS.key,key);syncCredentialViews();fetchQuota(key);setStatus('credentialStatus','已保存到本地浏览器。','success')});
-  document.getElementById('testCredentialBtn').addEventListener('click',async()=>{const key=document.getElementById('credentialInput').value.trim();if(!key){setStatus('credentialStatus','请先输入 API Key','error');return}setStatus('credentialStatus','测试连接中...','info');try{const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));setStatus('credentialStatus','连接成功，剩余额度：'+(j.remaining===-1?'∞':j.remaining),'success')}catch(e){setStatus('credentialStatus','连接失败：'+(e.message||e),'error')}});
+  document.getElementById('testCredentialBtn').addEventListener('click',async()=>{const key=document.getElementById('credentialInput').value.trim();const keyErr=validateKeyForFetch(key);if(keyErr){setStatus('credentialStatus',keyErr,'error');return}setStatus('credentialStatus','测试连接中...','info');try{const r=await fetch('/api/key-info',{headers:{'X-API-Key':key}});const j=await r.json();if(!r.ok)throw new Error(j.error||('HTTP '+r.status));setStatus('credentialStatus','连接成功，剩余额度：'+(j.remaining===-1?'∞':j.remaining),'success')}catch(e){setStatus('credentialStatus','连接失败：'+(e.message||e),'error')}});
   document.getElementById('clearCredentialBtn').addEventListener('click',()=>{localStorage.removeItem(STORAGE_KEYS.key);document.getElementById('apiKey').value='';document.getElementById('credentialInput').value='';document.getElementById('quotaText').textContent='—';syncCredentialViews();setStatus('credentialStatus','已清空本地凭证。','info')});
   document.getElementById('debugErrorsToggle').addEventListener('change',e=>{state.settings.debugErrors=e.target.checked;persistSettings()});
   document.getElementById('historyLimitSelect').addEventListener('change',e=>{state.settings.historyLimit=Number(e.target.value)||20;persistSettings();persistHistory();renderTaskList();if(state.selectedTaskId)renderTaskDetail(state.selectedTaskId)});
