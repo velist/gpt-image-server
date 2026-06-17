@@ -1,5 +1,17 @@
 [
   {
+    "id": "ade37324-37d0-3663-c319-46bf569bb53b",
+    "key": "sk-gi-ade3732437d03663c31946bf569bb53b1e9551f587470634",
+    "name": "恢复的Key",
+    "maxImages": -1,
+    "usedImages": 0,
+    "remaining": -1,
+    "expiresAt": null,
+    "createdAt": "2026-06-17T15:23:07.325Z",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "cffcedf9-90f4-4938-b2fc-f70bd682b611",
     "key": "sk-gi-9fb699c17e106e841601ae0e6f78b316f888472622d51556",
     "name": "菜菜",
@@ -298,16 +310,5 @@
     "createdAt": "2026-04-24 23:17:33",
     "enabled": true,
     "lastUsedAt": "2026-06-09T15:06:37.352Z"
-  },
-  {
-    "id": "ade37324-37d0-3663-c319-46bf569bb53b",
-    "key": "sk-gi-ade3732437d03663c31946bf569bb53b1e9551f587470634",
-    "name": "恢复的Key",
-    "maxImages": -1,
-    "usedImages": 0,
-    "expiresAt": null,
-    "createdAt": "2026-06-17T15:23:07.325Z",
-    "enabled": 1,
-    "lastUsedAt": null
   }
 ]
