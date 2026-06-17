@@ -249,7 +249,101 @@ textarea{min-height:120px;resize:vertical;line-height:1.55;font-size:15px}
 .note{font-size:12px;color:var(--text-muted);line-height:1.55}
 .switch{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-sunken);border:1px solid var(--border);border-radius:var(--r-md)}
 .switch input{width:auto;transform:scale(1.1)}
-@media (max-width:1024px){.page-grid{grid-template-columns:1fr}.task-layout{grid-template-columns:1fr}.app{grid-template-columns:1fr}.sidebar{display:none}.content{padding:12px}.topbar{padding:0 12px}}
+/* --- 移动端底部导航 --- */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--bg-raised);border-top:1px solid var(--border);padding:2px 6px;padding-bottom:max(2px,env(safe-area-inset-bottom))}
+.mobile-nav-inner{display:flex;gap:0;max-width:480px;margin:0 auto}
+.mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;height:50px;background:transparent;border:none;border-radius:var(--r-md);color:var(--text-muted);font-size:10px;font-weight:500;padding:2px;transition:color .15s,background-color .15s;-webkit-tap-highlight-color:transparent}
+.mobile-nav-btn:active{background:var(--bg-pressed)}
+.mobile-nav-btn.active{color:var(--accent)}
+.mobile-nav-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* 平板及以下 */
+@media (max-width:1024px){
+  .app{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .content{padding:12px;padding-bottom:72px}
+  .topbar{padding:0 12px}
+  .page-grid{grid-template-columns:1fr}
+  .task-layout{grid-template-columns:1fr}
+  .mobile-nav{display:block}
+  .result-grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  .upload-slots-grid{grid-template-columns:repeat(3,1fr);gap:6px}
+  .detail-shell{grid-template-columns:1fr}
+  textarea{min-height:100px;font-size:14px}
+  .primary-wide{height:40px;font-size:14px}
+  .btn-sm{height:34px;font-size:12px}
+}
+/* 手机 */
+@media (max-width:768px){
+  .topbar{height:42px;padding:0 10px}
+  .topbar h2{font-size:14px}
+  .topbar p{display:none}
+  .topbar-right{gap:4px}
+  .top-btn{height:30px;padding:0 10px;font-size:12px}
+  .primary-btn{height:30px;padding:0 10px;font-size:12px}
+  #newTaskBtn{display:none}
+  .content{padding:8px;padding-bottom:72px}
+  .page-grid{gap:10px}
+  .card{border-radius:var(--r-lg)}
+  .card-body{padding:10px 12px}
+  .result-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .detail-sidebar{flex-direction:row;flex-wrap:wrap;gap:8px}
+  .detail-sidebar .kv{flex:1;min-width:130px}
+  .info-grid{grid-template-columns:1fr}
+  .key-card,.settings-card{max-width:100%}
+  .field{margin-bottom:10px}
+  .chips{gap:5px}
+  .chip{padding:5px 9px;font-size:11px}
+  .row{gap:6px}
+  /* 首页 */
+  .home-topbar{padding:10px 14px}
+  .home-topbar .brand-title strong{font-size:13px}
+  .home-topbar .link-btn{height:30px;padding:0 10px;font-size:12px}
+  .home-main{padding:20px 14px 80px}
+  .home-hero{padding:4px 0 24px;margin-bottom:20px}
+  .home-hero h1{font-size:28px}
+  .home-hero p{font-size:13px}
+  .home-grid,.home-skeleton{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+  .home-card{border-radius:16px}
+  .home-card .body{padding:10px 12px 12px}
+  .home-card .body .meta .title{font-size:16px}
+  .home-actions{gap:8px}
+  .home-actions .btn{height:34px;padding:0 14px;font-size:12px}
+  /* 任务列表 */
+  .task-list{max-height:none}
+  .task-item{padding:8px}
+  .detail-panel{padding:12px;min-height:200px}
+  .detail-header h3{font-size:16px}
+  .task-thumb{max-width:200px;margin:0 auto}
+  /* 弹窗 */
+  .no-key-card{padding:24px 18px 18px;max-width:320px;width:calc(100vw - 32px)}
+  .no-key-card h3{font-size:18px}
+  .no-key-card .qr-wrap img{width:140px;height:140px}
+  .no-key-card .modal-actions button{height:38px;font-size:12px}
+  /* 上传槽 */
+  .upload-slot .slot-placeholder{font-size:10px}
+  .upload-slot .slot-placeholder .plus{font-size:16px}
+}
+/* 小屏手机 */
+@media (max-width:480px){
+  .topbar{gap:2px}
+  .topbar-right{gap:2px}
+  .top-btn{padding:0 7px;font-size:11px}
+  .result-grid{grid-template-columns:1fr}
+  .upload-slots-grid{grid-template-columns:repeat(2,1fr);gap:4px}
+  .home-grid,.home-skeleton{grid-template-columns:1fr;gap:12px}
+  .home-hero h1{font-size:24px}
+  .home-section-title h2{font-size:18px}
+  .home-card .img-wrap{aspect-ratio:3/4}
+  .detail-sidebar{flex-direction:column}
+  .detail-sidebar .kv{flex:none}
+  textarea{font-size:13px;min-height:90px}
+  .card-body{padding:8px 10px}
+  .row{flex-direction:column;gap:6px}
+  .row>*{flex:none}
+  .editor-tools{flex-direction:column;align-items:flex-start;gap:4px}
+  .mobile-nav-btn{height:46px;font-size:9px}
+  .mobile-nav-btn svg{width:18px;height:18px}
+}
 
 /* --- 优秀示例（首页） --- */
 :root{
@@ -314,7 +408,6 @@ body.view-home{overflow:auto}
 .home-footer{padding:36px 0 0;margin-top:48px;border-top:1px solid var(--border);color:var(--text-muted);font-size:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .home-status{margin-bottom:16px}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@media (max-width:768px){.home-topbar{padding:12px 16px}.home-main{padding:24px 16px 60px}.home-hero h1{font-size:34px}.home-grid,.home-skeleton{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}}
 .no-key-overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);animation:fadeIn .2s ease}
 .no-key-overlay.hidden{display:none}
 .no-key-card{background:var(--bg-raised);border:1px solid var(--border);border-radius:24px;padding:32px 28px 24px;max-width:380px;width:calc(100vw - 40px);text-align:center;box-shadow:var(--shadow-md),0 16px 48px rgba(0,0,0,.12);animation:scaleIn .25s ease}
@@ -714,6 +807,31 @@ body.view-home{overflow:auto}
       </section>
     </div>
   </main>
+
+  <nav class="mobile-nav" id="mobileNav">
+    <div class="mobile-nav-inner">
+      <button class="mobile-nav-btn" id="mobileHomeBtn">
+        <svg viewBox="0 0 24 24"><path d="M3 12l9-9 9 9"></path><path d="M5 10v10a1 1 0 0 0 1 1h4v-5a2 2 0 0 1 4 0v5h4a1 1 0 0 0 1-1V10"></path></svg>
+        <span>首页</span>
+      </button>
+      <button class="mobile-nav-btn active" data-page="generate">
+        <svg viewBox="0 0 24 24"><path d="M12 3v6"></path><path d="M12 15v6"></path><path d="M5.6 5.6l4.2 4.2"></path><path d="M14.2 14.2l4.2 4.2"></path><path d="M3 12h6"></path><path d="M15 12h6"></path><path d="M5.6 18.4l4.2-4.2"></path><path d="M14.2 9.8l4.2-4.2"></path></svg>
+        <span>生成</span>
+      </button>
+      <button class="mobile-nav-btn" data-page="edit">
+        <svg viewBox="0 0 24 24"><path d="M4 19.5V16l10.6-10.6a1.7 1.7 0 0 1 2.4 0l1.6 1.6a1.7 1.7 0 0 1 0 2.4L8 20H4z"></path><path d="M13.5 6.5l4 4"></path></svg>
+        <span>图生图</span>
+      </button>
+      <button class="mobile-nav-btn" data-page="tasks">
+        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M8 11h8"></path><path d="M8 15h5"></path></svg>
+        <span>任务</span>
+      </button>
+      <button class="mobile-nav-btn" data-page="credentials">
+        <svg viewBox="0 0 24 24"><path d="M7 14a4 4 0 1 1 0-8h6a5 5 0 1 1 0 10H9"></path><path d="M9 14h6"></path><path d="M15 14v3"></path><path d="M18 14v2"></path></svg>
+        <span>凭证</span>
+      </button>
+    </div>
+  </nav>
 </div>
 
 <script>
@@ -761,6 +879,7 @@ function switchPage(page){
   state.currentPage=page;
   document.querySelectorAll('.page').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
   document.querySelectorAll('.nav-btn').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
+  document.querySelectorAll('.mobile-nav-btn').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
   document.getElementById('pageTitle').textContent=PAGE_META[page].title;
   document.getElementById('pageSubtitle').textContent=PAGE_META[page].subtitle;
 }
@@ -1263,8 +1382,10 @@ function renderSlots(){
 
 function bindEvents(){
   document.querySelectorAll('.nav-btn[data-page]').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
+  document.querySelectorAll('.mobile-nav-btn[data-page]').forEach(btn=>btn.addEventListener('click',()=>switchPage(btn.dataset.page)));
   document.getElementById('newTaskBtn').addEventListener('click',()=>switchPage('generate'));
   document.getElementById('backHomeBtn').addEventListener('click',showHome);
+  document.getElementById('mobileHomeBtn').addEventListener('click',showHome);
   document.getElementById('homeEnterWorkspace').addEventListener('click',()=>showWorkspace('generate'));
   document.getElementById('homeStartBtn').addEventListener('click',()=>showWorkspace('generate'));
   document.getElementById('homeReloadExamples').addEventListener('click',()=>loadExamples(true));
