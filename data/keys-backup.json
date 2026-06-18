@@ -4,12 +4,12 @@
     "key": "sk-gi-ade3732437d03663c31946bf569bb53b1e9551f587470634",
     "name": "恢复的Key",
     "maxImages": 200,
-    "usedImages": 0,
-    "remaining": 200,
+    "usedImages": 1,
+    "remaining": 199,
     "expiresAt": null,
     "createdAt": "2026-06-17T15:23:07.325Z",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-06-18T03:21:59.454Z"
   },
   {
     "id": "cffcedf9-90f4-4938-b2fc-f70bd682b611",
