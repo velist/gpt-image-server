@@ -1,5 +1,17 @@
 [
   {
+    "id": "1c27d5bb-e98c-4f8b-bb3e-7034c5c0fb03",
+    "key": "sk-gi-a80a4a2ae44e6b97bd3417196dcd6584b5520cf901d47eb2",
+    "name": "群",
+    "maxImages": 100,
+    "usedImages": 0,
+    "remaining": 100,
+    "expiresAt": "2026-06-23T08:49:00.000Z",
+    "createdAt": "2026-06-20 08:49:10",
+    "enabled": true,
+    "lastUsedAt": null
+  },
+  {
     "id": "ade37324-37d0-3663-c319-46bf569bb53b",
     "key": "sk-gi-ade3732437d03663c31946bf569bb53b1e9551f587470634",
     "name": "恢复的Key",
