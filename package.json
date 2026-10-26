@@ -4,6 +4,7 @@
   "description": "GPT-Image-2 proxy server with key management",
   "main": "server.js",
   "scripts": {
+    "test:distribution": "node --test scripts/test-distribution.js scripts/test-distribution-backup.js",
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build:seo": "node scripts/build-seo.js"

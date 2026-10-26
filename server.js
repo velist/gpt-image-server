@@ -822,6 +822,15 @@ app.use('/api/admin', (req, res, next) => {
 });
 
 // --- Admin API: List Keys ---
+require('./api-distribution')(app, db, {
+  authAdmin, proxyRequest, validateSize,
+  store: GITHUB_TOKEN ? require('./distribution-backup')({
+    token: GITHUB_TOKEN, repo: GITHUB_REPO, branch: GITHUB_BRANCH,
+    secret: process.env.DISTRIBUTION_BACKUP_SECRET
+  }) : undefined,
+  upstreamKey: () => process.env.UPSTREAM_API_KEY || UPSTREAM_KEY
+});
+
 app.get('/api/admin/keys', (req, res) => {
   const { page = 1, limit = 50, search = '' } = req.query;
   const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -946,7 +955,7 @@ app.get('/api/admin/stats', (req, res) => {
 });
 
 app.get('/api/version', (req, res) => {
-  res.json({ version: '2026-04-29-admin-ui-github-persistence', commit: process.env.RENDER_GIT_COMMIT || null });
+  res.json({ version: '2026-10-26-api-distribution', commit: process.env.RENDER_GIT_COMMIT || null });
 });
 
 // --- User API: Key info ---
