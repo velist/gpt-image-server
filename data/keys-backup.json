@@ -52,12 +52,12 @@
     "key": "sk-gi-cdb4caf0bc1c8d8adf8523e508ea24d3e3c10ab321bfd665",
     "name": "清风",
     "maxImages": 10,
-    "usedImages": 0,
-    "remaining": 10,
+    "usedImages": 1,
+    "remaining": 9,
     "expiresAt": null,
     "createdAt": "2026-05-22 03:09:29",
     "enabled": true,
-    "lastUsedAt": null
+    "lastUsedAt": "2026-11-11T02:44:15.657Z"
   },
   {
     "id": "5fcb03f3-47b2-4119-a2c3-d08e27ab8f9c",
