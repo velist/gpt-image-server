@@ -577,7 +577,7 @@ body.view-home{overflow:auto}
                 <div class="card-title"><h3>凭证</h3></div>
                 <div class="field">
                   <label>API Key</label>
-                  <input type="password" id="apiKey" placeholder="sk-gi-..." autocomplete="off">
+                  <input type="password" id="apiKey" placeholder="sk-gi-… 或 sk-dist-…" autocomplete="off">
                 </div>
                 <div class="note">只保存在当前浏览器本地。用于额度查询与生成请求。</div>
               </div>
@@ -768,7 +768,7 @@ body.view-home{overflow:auto}
           <div class="card-title"><h3>凭证</h3></div>
           <div class="field">
             <label>当前 API Key</label>
-            <input type="password" id="credentialInput" placeholder="sk-gi-...">
+            <input type="password" id="credentialInput" placeholder="sk-gi-… 或 sk-dist-…">
           </div>
           <div class="row" style="margin-bottom:14px">
             <button class="top-btn" id="saveCredentialBtn">保存到本地</button>
@@ -860,7 +860,7 @@ function uid(){return 'local_'+Date.now()+'_'+Math.random().toString(16).slice(2
 function validateKeyForFetch(key){
   if(!key)return '请输入 API Key';
   if(/[^\x00-\x7F]/.test(key))return 'API Key 包含非法字符，请检查是否复制了多余的空格或中文';
-  if(!key.startsWith('sk-gi-'))return 'API Key 格式不正确，应以 sk-gi- 开头';
+  if(!/^sk-(gi|dist)-/.test(key))return 'API Key 格式不正确，应以 sk-gi- 或 sk-dist- 开头';
   return null;
 }
 function saveJSON(key,val){localStorage.setItem(key,JSON.stringify(val))}
@@ -926,7 +926,7 @@ function setActiveTask(task){state.activeTask=task;if(task)saveJSON(STORAGE_KEYS
 function loadActiveTask(){state.activeTask=readJSON(STORAGE_KEYS.activeTask,null)}
 
 async function fetchQuota(key){
-  if(!key||!key.startsWith('sk-gi-')){document.getElementById('quotaText').textContent='—';return}
+  if(!key||!/^sk-(gi|dist)-/.test(key)){document.getElementById('quotaText').textContent='—';return}
   const err=validateKeyForFetch(key);
   if(err){document.getElementById('quotaText').textContent='格式错误';return}
   try{

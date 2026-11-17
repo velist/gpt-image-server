@@ -37,7 +37,7 @@ const app = express();
 
 // --- SQLite ---
 const Database = require('better-sqlite3');
-const dbDir = path.join(__dirname, 'data');
+const dbDir = process.env.IMAGE_DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dbDir)) fs.mkdirSync(dbDir, { recursive: true });
 const db = new Database(path.join(dbDir, 'keys.db'));
 db.pragma('journal_mode = WAL');
@@ -77,6 +77,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_generate_tasks_created_at ON generate_tasks(created_at);
 `);
 
+// Task owners can now come from either credential table. Preserve existing task rows on upgrade.
+if (db.pragma('foreign_key_list(generate_tasks)').length) db.transaction(() => {
+  const def = db.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='generate_tasks'").get().sql;
+  const indexes = db.prepare("SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name='generate_tasks' AND sql IS NOT NULL").all();
+  db.exec(def.replace('generate_tasks','shared_tasks').replace(/,\s*FOREIGN KEY\s*\(key_id\) REFERENCES keys\(id\)/i,''));
+  db.exec('INSERT INTO shared_tasks SELECT * FROM generate_tasks; DROP TABLE generate_tasks; ALTER TABLE shared_tasks RENAME TO generate_tasks');
+  for(const {sql} of indexes) db.exec(sql);
+})();
 // --- Helpers ---
 function generateKey() {
   return 'sk-gi-' + crypto.randomBytes(24).toString('hex');
@@ -99,29 +107,37 @@ function validateSize(size) {
   return null;
 }
 
-function validateApiKey(keyStr) {
-  const row = db.prepare('SELECT * FROM keys WHERE key = ?').get(keyStr);
-  if (!row) return { ok: false, error: '无效的 API Key' };
-  if (!row.enabled) return { ok: false, error: 'API Key 已禁用' };
-  if (row.expires_at && new Date(row.expires_at) < new Date())
-    return { ok: false, error: 'API Key 已过期' };
-  if (row.max_images > 0 && row.used_images >= row.max_images)
-    return { ok: false, error: '生成额度已用尽' };
-  return { ok: true, key: row };
+async function workbenchKey(req,res) {
+  try { await quota.check(); } catch { res.status(503).json({error:'额度持久化暂不可用'}); return; }
+  const row = quota.resolve(req.headers['x-api-key']);
+  if (!row || !row.enabled || (row.expires_at && Date.parse(row.expires_at)<=Date.now())) {
+    res.status(403).json({error:'密钥无效、已停用或已到期'}); return;
+  }
+  return row;
 }
-
+async function hold(row,n,id,res) {
+  if (!Number.isInteger(n) || n<1 || n>10) { res.status(400).json({error:'n 须为 1–10 的整数'}); return false; }
+  try { const error = await quota.reserve(row.id,n,id); if (!error) return true;
+    res.status(429).json({error}); } catch { res.status(503).json({error:'无法持久化预占额度'}); } return false;
+}
+function imageCount(raw,max) {
+  const items=JSON.parse(raw).data;
+  if (!Array.isArray(items)||!items.length||items.length>max||items.some(i=>!(typeof i?.url==='string'&&i.url.length || typeof i?.b64_json==='string'&&i.b64_json.length))) throw Error('上游图片数据异常');
+  return items.length;
+}
 function keyToJSON(row) {
+  const balance = quota.view(quota.siteRow(row));
   return {
     id: row.id,
     key: row.key,
     name: row.name,
     maxImages: row.max_images,
-    usedImages: row.used_images,
-    remaining: row.max_images > 0 ? row.max_images - row.used_images : -1,
+    usedImages: balance.usedImages, reservedImages: balance.reservedImages,
+    remaining: balance.remaining,
     expiresAt: row.expires_at,
     createdAt: row.created_at,
     enabled: !!row.enabled,
-    lastUsedAt: row.last_used_at
+    lastUsedAt: balance.lastUsedAt
   };
 }
 
@@ -133,7 +149,7 @@ const TASK_TTL_MS = 60 * 60 * 1000;
 const TERMINAL_TASK_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 // --- Result images persistence ---
-const RESULTS_DIR = path.join(__dirname, 'data', 'results');
+const RESULTS_DIR = path.join(dbDir, 'results');
 if (!fs.existsSync(RESULTS_DIR)) fs.mkdirSync(RESULTS_DIR, { recursive: true });
 
 function mimeExtFromFormat(format) {
@@ -191,8 +207,7 @@ function taskRowToStatusJSON(row) {
   };
 }
 
-function createGenerateTask(keyId, body) {
-  const id = crypto.randomBytes(16).toString('hex');
+function createGenerateTask(keyId, body, id) {
   const now = nowIso();
   const expiresAt = new Date(Date.now() + TASK_TTL_MS).toISOString();
   db.prepare(`INSERT INTO generate_tasks (id, status, key_id, request_json, created_at, updated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
@@ -231,19 +246,7 @@ async function recoverPendingTasksOnStartup() {
   markExpiredTasks();
   const rows = db.prepare("SELECT id, key_id, request_json FROM generate_tasks WHERE status IN ('queued','running') AND expires_at > ? ORDER BY created_at ASC").all(nowIso());
   for (const row of rows) {
-    try {
-      const req = row.request_json ? JSON.parse(row.request_json) : null;
-      if (req && req.file_path && fs.existsSync(req.file_path)) {
-        // Edit task - launch via edit runner
-        runEditTask(row.id, row.key_id, req.file_path);
-      } else {
-        runGenerateTask(row.id, row.key_id, req || {});
-      }
-    } catch (err) {
-      const now = nowIso();
-      db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
-        .run('恢复任务失败: ' + err.message, now, now, now, row.id);
-    }
+    db.prepare("UPDATE generate_tasks SET status='error',error='服务重启，任务未重试；请核对记录',completed_at=?,updated_at=? WHERE id=?").run(nowIso(),nowIso(),row.id);
   }
 }
 
@@ -251,8 +254,7 @@ const finishGenerateTaskSuccess = db.transaction((taskId, keyId, resultJson) => 
   const now = nowIso();
   db.prepare("UPDATE generate_tasks SET status = 'done', result_json = ?, error = NULL, updated_at = ?, completed_at = ? WHERE id = ?")
     .run(resultJson, now, now, taskId);
-  db.prepare("UPDATE keys SET used_images = used_images + 1, last_used_at = ? WHERE id = ?")
-    .run(now, keyId);
+
 });
 
 let gitHubTokenValid = false;
@@ -283,7 +285,7 @@ async function verifyGitHubToken() {
 }
 
 function writeLocalKeyBackup(content) {
-  const backupPath = path.join(__dirname, KEY_BACKUP_PATH);
+  const backupPath = path.join(dbDir, 'keys-backup.json');
   fs.writeFileSync(backupPath, content, 'utf8');
   console.log(`[KEY BACKUP] \u672c\u5730\u5907\u4efd\u5df2\u66f4\u65b0: ${backupPath} (${content.length} bytes)`);
 }
@@ -291,7 +293,6 @@ function writeLocalKeyBackup(content) {
 function replaceKeysFromBackup(items) {
   const stmt = db.prepare(`INSERT INTO keys (id, key, name, max_images, used_images, expires_at, created_at, enabled, last_used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const tx = db.transaction(keys => {
-    db.prepare('DELETE FROM generate_tasks').run();
     db.prepare('DELETE FROM keys').run();
     for (const k of keys) {
       stmt.run(k.id || uuidv4(), k.key, k.name || '', k.maxImages ?? -1, k.usedImages || 0, k.expiresAt || null, k.createdAt || new Date().toISOString(), k.enabled === false ? 0 : 1, k.lastUsedAt || null);
@@ -318,102 +319,43 @@ async function fetchGitHubKeyBackup() {
   return { sha: data.sha, content: fileContent, keys: JSON.parse(fileContent) };
 }
 
+const siteStore = GITHUB_TOKEN && require('./distribution-backup')({ token:GITHUB_TOKEN, repo:GITHUB_REPO,
+  branch:GITHUB_BRANCH, secret:process.env.DISTRIBUTION_BACKUP_SECRET, file:'data/workbench-backup.enc.json' });
 async function restoreKeysFromBackupFile() {
-  const backupPath = path.join(__dirname, KEY_BACKUP_PATH);
-  try {
-    const remote = await fetchGitHubKeyBackup();
-    if (remote && Array.isArray(remote.keys)) {
-      replaceKeysFromBackup(remote.keys);
-      writeLocalKeyBackup(remote.content);
-      console.log(`Restored ${remote.keys.length} keys from GitHub backup`);
-      return;
+  const local = path.join(dbDir,'keys-backup.json');
+  if (siteStore) {
+    const saved = await siteStore.load();
+    if (saved) {
+      if (saved.version!==1 || !Array.isArray(saved.keys)) throw Error('工作台密钥备份格式错误');
+      replaceKeysFromBackup(saved.keys); return;
     }
-  } catch (err) {
-    console.error('GitHub key restore failed:', err.message);
+    if (!gitHubTokenValid) throw Error('无法核对旧密钥备份');
+    const old = await fetchGitHubKeyBackup();
+    if (!gitHubTokenValid) throw Error('无法核对旧密钥备份');
+    if (old) { if (!Array.isArray(old.keys)) throw Error('旧密钥备份格式错误'); replaceKeysFromBackup(old.keys); }
+    else if (fs.existsSync(local)) replaceKeysFromBackup(JSON.parse(fs.readFileSync(local,'utf8')));
+    await siteStore.save({version:1,keys:allKeysJSON()}); return;
   }
-  if (!fs.existsSync(backupPath)) return;
-  const keys = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
-  replaceKeysFromBackup(Array.isArray(keys) ? keys : []);
-  console.log(`Restored ${Array.isArray(keys) ? keys.length : 0} keys from local backup`);
+  if (fs.existsSync(local)) replaceKeysFromBackup(JSON.parse(fs.readFileSync(local,'utf8')));
 }
-
-async function updateGitHubKeyBackup() {
-  const keyContent = JSON.stringify(allKeysJSON(), null, 2);
-  // Always save local backup first
-  writeLocalKeyBackup(keyContent);
-
-  if (!GITHUB_TOKEN || !gitHubTokenValid) {
-    console.warn('[KEY BACKUP] GitHub 不可用，仅保存了本地备份。重启/重新部署后可能丢失！');
-    return false;
-  }
-
-  // Retry up to 3 times with exponential backoff
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${KEY_BACKUP_PATH}`;
-      const headers = {
-        'Authorization': `Bearer ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github+json',
-        'User-Agent': 'gpt-image-server'
-      };
-      let sha;
-      const current = await fetch(`${url}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
-      if (current.ok) sha = (await current.json()).sha;
-      else if (current.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
-      else if (current.status !== 404) throw new Error(`GitHub 读取当前备份失败: HTTP ${current.status}`);
-      const res = await fetch(url, {
-        method: 'PUT',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Backup image keys', branch: GITHUB_BRANCH, content: Buffer.from(keyContent).toString('base64'), sha })
-      });
-      if (!res.ok) {
-        if (res.status === 401) { gitHubTokenValid = false; throw new Error('GITHUB_TOKEN 已失效，请更新 Token！'); }
-        if (res.status === 409) throw new Error('GitHub 备份冲突(409)，远端已被其他进程更新');
-        throw new Error(`GitHub 写入备份失败: HTTP ${res.status}`);
-      }
-      console.log('[KEY BACKUP] GitHub 备份成功');
-      return true;
-    } catch (err) {
-      console.error(`[KEY BACKUP] GitHub 同步失败 (第${attempt}/3次):`, err.message);
-      if (attempt < 3) {
-        const delay = Math.min(1000 * Math.pow(2, attempt), 8000);
-        console.error(`[KEY BACKUP] ${delay/1000}s 后重试...`);
-        await new Promise(r => setTimeout(r, delay));
-      }
-    }
-  }
-  console.error('[KEY BACKUP] 3次重试均失败，Key 数据仅保存在本地，重新部署后会丢失！');
-  return false;
-}
-
+let siteWrites=Promise.resolve();
 async function persistKeysToGitHub() {
-  const ok = await updateGitHubKeyBackup();
-  if (!ok) throw new Error('GitHub 持久化失败：备份未成功写入远程仓库');
+  const operation=siteWrites.then(async()=>{
+    const keys=allKeysJSON();
+    if (siteStore) await siteStore.save({version:1,keys});
+    else writeLocalKeyBackup(JSON.stringify(keys));
+  });
+  siteWrites=operation.catch(()=>{}); return operation;
 }
-
-let backupTimer;
-function scheduleKeyBackup() {
-  if (!GITHUB_TOKEN) return;
-  clearTimeout(backupTimer);
-  backupTimer = setTimeout(() => persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message)), 2000);
-}
-
-function startPeriodicKeyBackup() {
-  if (!GITHUB_TOKEN) {
-    console.log('GitHub key backup disabled: GITHUB_TOKEN is not set');
-    return;
-  }
-  setTimeout(() => scheduleKeyBackup(), 10000);
-  setInterval(() => scheduleKeyBackup(), 5 * 60 * 1000);
-}
-
-(async () => {
+const startup = (async () => {
   gitHubTokenValid = await verifyGitHubToken();
+  await quota.ready;
+  await quota.check();
   await restoreKeysFromBackupFile();
-  startPeriodicKeyBackup();
+
   startTaskCleanupLoop();
   await recoverPendingTasksOnStartup();
-})().catch(err => console.error('Startup initialization failed:', err));
+})();
 
 // --- Middleware ---
 app.use(express.json({ limit: '10mb' }));
@@ -555,6 +497,7 @@ async function runGenerateTask(taskId, keyId, body) {
   if (!task) return;
   const now = nowIso();
   if (new Date(task.expires_at) <= new Date()) {
+    await quota.settle(taskId,0,'failed','任务已过期');
     db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?")
       .run(now, now, taskId);
     return;
@@ -568,25 +511,18 @@ async function runGenerateTask(taskId, keyId, body) {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
     };
-    let result;
-    try {
-      console.log(`[GENERATE] task=${taskId} n=${body.n||1} size=${body.size||'default'} model=${body.model||'default'}`);
-      result = await proxyRequest('/images/generations', 'POST', reqHeaders, JSON.stringify(body));
-    } catch (firstErr) {
-      console.log(`[GENERATE] task=${taskId} first attempt failed: ${firstErr.message}, retrying in 2s...`);
-      await new Promise(r => setTimeout(r, 2000));
-      console.log(`[GENERATE] task=${taskId} retrying...`);
-      result = await proxyRequest('/images/generations', 'POST', reqHeaders, JSON.stringify(body));
-    }
+    const result = await proxyRequest('/images/generations', 'POST', reqHeaders, JSON.stringify(body));
 
     if (result.status === 200) {
       const responseBody = result.body.toString('utf8');
       const parsed = JSON.parse(responseBody);
       console.log(`[GENERATE] task=${taskId} success, upstream returned ${(parsed.data||[]).length} images`);
+      await quota.settle(taskId,imageCount(responseBody,JSON.parse(task.request_json).n || 1),'success',null);
       const persistedJson = persistResultImagesToDisk(taskId, responseBody, body.output_format);
       finishGenerateTaskSuccess(taskId, keyId, persistedJson);
-      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
+
     } else {
+      if (result.status>=400 && result.status<500) await quota.settle(taskId,0,'failed','上游拒绝请求'); else await quota.uncertain(taskId);
       let errorMessage = '';
       try {
         const errBody = JSON.parse(result.body.toString('utf8'));
@@ -599,6 +535,7 @@ async function runGenerateTask(taskId, keyId, body) {
         .run(errorMessage, failedAt, failedAt, failedAt, taskId);
     }
   } catch (e) {
+    await quota.uncertain(taskId).catch(()=>{});
     const failedAt = nowIso();
     db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
       .run('上游请求失败: ' + e.message, failedAt, failedAt, failedAt, taskId);
@@ -609,8 +546,7 @@ app.post('/api/generate', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
 
-  const v = validateApiKey(apiKey);
-  if (!v.ok) return res.status(403).json({ error: v.error });
+  const row = await workbenchKey(req,res); if (!row) return;
 
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: '缺少 prompt 参数' });
@@ -623,8 +559,10 @@ app.post('/api/generate', async (req, res) => {
   if (!body.model) body.model = 'gpt-image-2';
   if (!body.response_format) body.response_format = 'b64_json';
 
-  const taskId = createGenerateTask(v.key.id, body);
-  runGenerateTask(taskId, v.key.id, body);
+  const taskId = crypto.randomBytes(16).toString('hex');
+  if (!await hold(row,body.n === undefined ? 1 : body.n,taskId,res)) return;
+  try { createGenerateTask(row.id, body, taskId); } catch(e) { await quota.settle(taskId,0,'failed','创建任务失败'); throw e; }
+  runGenerateTask(taskId, row.id, body);
   res.status(202).json({ taskId });
 });
 
@@ -646,7 +584,7 @@ app.get('/api/admin/tasks/by-key/:keyPrefix', (req, res) => {
   const auth = authAdmin(req);
   if (!auth) return res.status(401).json({ error: '未授权' });
   const rows = db.prepare(
-    "SELECT gt.id, gt.status, gt.created_at, gt.completed_at, gt.result_json IS NOT NULL as has_result FROM generate_tasks gt JOIN keys k ON gt.key_id = k.id WHERE k.key LIKE ? ORDER BY gt.created_at DESC LIMIT 20"
+    "SELECT gt.id, gt.status, gt.created_at, gt.completed_at, gt.result_json IS NOT NULL as has_result FROM generate_tasks gt JOIN keys k ON (gt.key_id = k.id OR gt.key_id = 'site:' || k.id) WHERE k.key LIKE ? ORDER BY gt.created_at DESC LIMIT 20"
   ).all('%' + req.params.keyPrefix + '%');
   res.json(rows);
 });
@@ -668,6 +606,7 @@ async function runEditTask(taskId, keyId, filePath) {
   if (!task) return;
   const now = nowIso();
   if (new Date(task.expires_at) <= new Date()) {
+    await quota.settle(taskId,0,'failed','任务已过期');
     db.prepare("UPDATE generate_tasks SET status = 'expired', error = COALESCE(error, '任务已过期'), updated_at = ?, completed_at = COALESCE(completed_at, ?) WHERE id = ?")
       .run(now, now, taskId);
     try { fs.unlinkSync(filePath); } catch {}
@@ -703,6 +642,7 @@ async function runEditTask(taskId, keyId, filePath) {
     parts.push(Buffer.from(`--${boundary}--\r\n`));
     bodyBuf = Buffer.concat(parts);
   } catch (e) {
+    await quota.settle(taskId,0,'failed','读取参考图失败');
     try { fs.unlinkSync(filePath); } catch {}
     db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
       .run('读取临时文件失败: ' + e.message, now, now, now, taskId);
@@ -714,16 +654,7 @@ async function runEditTask(taskId, keyId, filePath) {
       'Content-Type': `multipart/form-data; boundary=${boundary}`,
       'Authorization': 'Bearer ' + (process.env.UPSTREAM_API_KEY || UPSTREAM_KEY)
     };
-    let result;
-    try {
-      console.log(`[EDIT] task=${taskId} prompt=${(JSON.parse(task.request_json).prompt||'').slice(0,60)}`);
-      result = await proxyRequest('/images/edits', 'POST', editHeaders, bodyBuf);
-    } catch (firstErr) {
-      console.log(`[EDIT] task=${taskId} first attempt failed: ${firstErr.message}, retrying in 2s...`);
-      await new Promise(r => setTimeout(r, 2000));
-      console.log(`[EDIT] task=${taskId} retrying...`);
-      result = await proxyRequest('/images/edits', 'POST', editHeaders, bodyBuf);
-    }
+    const result = await proxyRequest('/images/edits', 'POST', editHeaders, bodyBuf);
 
     if (result.status === 200) {
       const responseBody = result.body.toString('utf8');
@@ -733,11 +664,12 @@ async function runEditTask(taskId, keyId, filePath) {
       } catch {}
       let editOutputFormat = 'png';
       try { editOutputFormat = JSON.parse(task.request_json).output_format || 'png'; } catch {}
+      await quota.settle(taskId,imageCount(responseBody,JSON.parse(task.request_json).n || 1),'success',null);
       const persistedJson = persistResultImagesToDisk(taskId, responseBody, editOutputFormat);
       finishGenerateTaskSuccess(taskId, keyId, persistedJson);
-      // finishGenerateTaskSuccess already bumps used_images, just need GitHub persist
-      await persistKeysToGitHub().catch(err => console.error('GitHub key backup failed:', err.message));
+
     } else {
+      if (result.status>=400 && result.status<500) await quota.settle(taskId,0,'failed','上游拒绝请求'); else await quota.uncertain(taskId);
       let errorMessage = '';
       try {
         const errBody = JSON.parse(result.body.toString('utf8'));
@@ -750,6 +682,7 @@ async function runEditTask(taskId, keyId, filePath) {
         .run(errorMessage, failedAt, failedAt, failedAt, taskId);
     }
   } catch (e) {
+    await quota.uncertain(taskId).catch(()=>{});
     const failedAt = nowIso();
     db.prepare("UPDATE generate_tasks SET status = 'error', error = ?, updated_at = ?, completed_at = ?, last_error_at = ? WHERE id = ?")
       .run('上游请求失败: ' + e.message, failedAt, failedAt, failedAt, taskId);
@@ -762,8 +695,7 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
 
-  const v = validateApiKey(apiKey);
-  if (!v.ok) return res.status(403).json({ error: v.error });
+  const row = await workbenchKey(req,res); if (!row) return;
 
   if (!req.file) return res.status(400).json({ error: '缺少参考图片' });
   const prompt = req.body.prompt;
@@ -774,7 +706,9 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
 
   // Save image to disk for async processing
   const taskId = crypto.randomBytes(16).toString('hex');
-  const filePath = path.join(__dirname, 'data', 'edit-' + taskId + '.bin');
+  const filePath = path.join(dbDir, 'edit-' + taskId + '.bin');
+  if (!await hold(row,1,taskId,res)) return;
+  try {
   fs.writeFileSync(filePath, req.file.buffer);
 
   const requestData = {
@@ -794,10 +728,11 @@ app.post('/api/edit', upload.single('image'), async (req, res) => {
   const now = nowIso();
   const expiresAt = new Date(Date.now() + TASK_TTL_MS).toISOString();
   db.prepare(`INSERT INTO generate_tasks (id, status, key_id, request_json, created_at, updated_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    .run(taskId, 'queued', v.key.id, JSON.stringify(requestData), now, now, expiresAt);
+    .run(taskId, 'queued', row.id, JSON.stringify(requestData), now, now, expiresAt);
 
+  } catch(e) { try { fs.unlinkSync(filePath); } catch {} await quota.settle(taskId,0,'failed','创建任务失败'); throw e; }
   // Launch async runner
-  runEditTask(taskId, v.key.id, filePath).catch(err => {
+  runEditTask(taskId, row.id, filePath).catch(err => {
     console.error('[EDIT] runner crashed:', err.message);
     try { fs.unlinkSync(filePath); } catch {}
   });
@@ -822,7 +757,8 @@ app.use('/api/admin', (req, res, next) => {
 });
 
 // --- Admin API: List Keys ---
-require('./api-distribution')(app, db, {
+const quota = require('./api-distribution')(app, db, {
+  siteKeys: { byKey: key => db.prepare('SELECT * FROM keys WHERE key=?').get(key), byId: id => db.prepare('SELECT * FROM keys WHERE id=?').get(id) },
   authAdmin, proxyRequest, validateSize,
   store: GITHUB_TOKEN ? require('./distribution-backup')({
     token: GITHUB_TOKEN, repo: GITHUB_REPO, branch: GITHUB_BRANCH,
@@ -893,6 +829,7 @@ app.patch('/api/admin/keys/:id', async (req, res) => {
     if (maxImages !== undefined) db.prepare('UPDATE keys SET max_images = ? WHERE id = ?').run(maxImages, req.params.id);
     if (expiresAt !== undefined) db.prepare('UPDATE keys SET expires_at = ? WHERE id = ?').run(expiresAt, req.params.id);
     if (enabled !== undefined) db.prepare('UPDATE keys SET enabled = ? WHERE id = ?').run(enabled ? 1 : 0, req.params.id);
+    if (resetUsage || usedImages !== undefined) await quota.resetSiteUsage(row.id,resetUsage ? 0 : usedImages);
     if (resetUsage) db.prepare('UPDATE keys SET used_images = 0 WHERE id = ?').run(req.params.id);
     else if (usedImages !== undefined) db.prepare('UPDATE keys SET used_images = ? WHERE id = ?').run(usedImages, req.params.id);
     await persistKeysToGitHub();
@@ -949,22 +886,22 @@ app.get('/api/admin/stats', (req, res) => {
   const total = db.prepare('SELECT COUNT(*) as c FROM keys').get().c;
   const active = db.prepare('SELECT COUNT(*) as c FROM keys WHERE enabled = 1').get().c;
   const expired = db.prepare("SELECT COUNT(*) as c FROM keys WHERE expires_at IS NOT NULL AND expires_at < ?").get(new Date().toISOString()).c;
-  const totalUsed = db.prepare('SELECT COALESCE(SUM(used_images),0) as s FROM keys').get().s;
-  const todayUsed = db.prepare("SELECT COALESCE(SUM(used_images),0) as s FROM keys WHERE date(last_used_at) = date(?)").get(new Date().toISOString()).s;
+  const balances = allKeysJSON();
+  const totalUsed = balances.reduce((n,k)=>n+k.usedImages,0);
+  const todayUsed = balances.filter(k=>k.lastUsedAt?.slice(0,10)===nowIso().slice(0,10)).reduce((n,k)=>n+k.usedImages,0);
   res.json({ totalKeys: total, activeKeys: active, expiredKeys: expired, totalImages: totalUsed, todayImages: todayUsed });
 });
 
 app.get('/api/version', (req, res) => {
-  res.json({ version: '2026-10-26-api-distribution', commit: process.env.RENDER_GIT_COMMIT || null });
+  res.json({ version: '2026-11-17-shared-quota', commit: process.env.RENDER_GIT_COMMIT || null });
 });
 
 // --- User API: Key info ---
-app.get('/api/key-info', (req, res) => {
+app.get('/api/key-info', async (req, res) => {
   const apiKey = req.headers['x-api-key'];
   if (!apiKey) return res.status(401).json({ error: '缺少 X-API-Key 请求头' });
-  const v = validateApiKey(apiKey);
-  if (!v.ok) return res.status(403).json({ error: v.error });
-  res.json(keyToJSON(v.key));
+  const row = await workbenchKey(req,res); if (!row) return;
+  res.json(quota.view(row));
 });
 
 // --- Serve admin page ---
@@ -973,8 +910,8 @@ app.get('/imgadmin', (req, res) => {
 });
 
 // --- Start ---
-app.listen(PORT, '0.0.0.0', () => {
+Promise.all([startup,quota.ready]).then(() => app.listen(PORT, '0.0.0.0', () => {
   console.log(`GPT-Image-2 Server running on http://0.0.0.0:${PORT}`);
   console.log(`  User UI:  http://localhost:${PORT}`);
   console.log(`  Admin UI: http://localhost:${PORT}/admin`);
-});
+})).catch(err=>{console.error('startup failed:',err.message);process.exit(1)});

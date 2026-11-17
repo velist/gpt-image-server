@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 
-// Separate credentials and accounting from website keys. Store only SHA-256 hashes.
-module.exports = function installDistribution(app, db, { authAdmin, proxyRequest, upstreamKey, validateSize, store }) {
+// Both entry points use this reservation journal. New credentials are hash-only.
+module.exports = function installDistribution(app, db, { authAdmin, proxyRequest, upstreamKey, validateSize, store, siteKeys }) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS distribution_keys (
       id TEXT PRIMARY KEY, key_hash TEXT UNIQUE NOT NULL, prefix TEXT NOT NULL,
@@ -73,6 +73,26 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
     remaining: row.max_images === -1 ? -1 : Math.max(0, row.max_images - row.used_images - row.reserved_images),
     expiresAt: row.expires_at, enabled: !!row.enabled, maxConcurrent: row.max_concurrent,
     createdAt: row.created_at, lastUsedAt: row.last_used_at });
+  function siteRow(site) {
+    if (!site) return null;
+    const id = 'site:' + site.id;
+    const saved = db.prepare('SELECT * FROM distribution_keys WHERE id=?').get(id);
+    return { ...site, id, key_hash: hash(site.key), prefix: site.key.slice(0, 14),
+      used_images: saved?.used_images ?? site.used_images, reserved_images: saved?.reserved_images ?? 0,
+      last_used_at: saved?.last_used_at ?? site.last_used_at, max_images: site.max_images > 0 ? site.max_images : -1,
+      max_concurrent: 10 };
+  }
+  function resolve(token) {
+    if (typeof token !== 'string') return null;
+    return siteRow(siteKeys?.byKey(token)) || db.prepare("SELECT * FROM distribution_keys WHERE key_hash=? AND id NOT LIKE 'site:%'").get(hash(token));
+  }
+  function current(id) {
+    return id.startsWith('site:') ? siteRow(siteKeys?.byId(id.slice(5))) : db.prepare('SELECT * FROM distribution_keys WHERE id=?').get(id);
+  }
+  async function check() {
+    await ready; await writes;
+    if (unavailable) throw Error('额度持久化暂不可用');
+  }
   function fields(body, row) {
     if (!body || typeof body !== 'object' || Array.isArray(body)) throw new Error('参数必须是 JSON 对象');
     const name = body.name ?? row?.name ?? '';
@@ -94,7 +114,7 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
     next();
   });
   app.get('/api/admin/distribution', (req, res) => {
-    res.json({ data: db.prepare('SELECT * FROM distribution_keys ORDER BY created_at DESC').all().map(view) });
+    res.json({ data: db.prepare('SELECT * FROM distribution_keys ORDER BY created_at DESC').all().map(row => current(row.id) || { ...row, enabled: 0 }).map(view) });
   });
   app.post('/api/admin/distribution', async (req, res) => {
     try {
@@ -110,6 +130,7 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
     try {
       const row = db.prepare('SELECT * FROM distribution_keys WHERE id = ?').get(req.params.id);
       if (!row) return fail(res, 404, '密钥不存在');
+      if (row.id.startsWith('site:')) return fail(res, 400, '请在工作台密钥管理修改此密钥');
       await durable(() => {
         const latest = db.prepare('SELECT * FROM distribution_keys WHERE id = ?').get(row.id);
         return db.prepare('UPDATE distribution_keys SET name=?, max_images=?, expires_at=?, enabled=?, max_concurrent=? WHERE id=?')
@@ -152,7 +173,7 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     const match = /^Bearer (\S+)$/i.exec(req.headers.authorization || '');
-    const row = match && db.prepare('SELECT * FROM distribution_keys WHERE key_hash=?').get(hash(match[1]));
+    const row = match && resolve(match[1]);
     if (!row) return fail(res, 401, '无效的分发 API Key');
     if (!row.enabled) return fail(res, 403, 'API Key 已停用');
     if (row.expires_at && Date.parse(row.expires_at) <= Date.now()) return fail(res, 403, 'API Key 已到期');
@@ -162,12 +183,15 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
   app.get('/v1/usage', (req, res) => res.json(view(req.distributionKey)));
   app.get('/v1/models', (req, res) => res.json({ object: 'list', data: [{ id: 'gpt-image-2', object: 'model', owned_by: 'site' }] }));
   const reserve = db.transaction((keyId, n, id) => {
-    const row = db.prepare('SELECT * FROM distribution_keys WHERE id=?').get(keyId);
-    if (!row.enabled || (row.expires_at && Date.parse(row.expires_at) <= Date.now())) return '密钥已停用或到期';
+    const row = current(keyId);
+    if (!row || !row.enabled || (row.expires_at && Date.parse(row.expires_at) <= Date.now())) return '密钥已停用或到期';
     if (row.max_images !== -1 && row.used_images + row.reserved_images + n > row.max_images) return '剩余张数不足';
     const active = db.prepare("SELECT COUNT(*) AS n FROM distribution_requests WHERE key_id=? AND status IN ('pending','uncertain')").get(keyId).n;
     if (active >= row.max_concurrent) return '已达到并发限制，请稍后重试';
     const now = new Date().toISOString();
+    if (keyId.startsWith('site:')) db.prepare(`INSERT OR IGNORE INTO distribution_keys
+      (id,key_hash,prefix,name,max_images,used_images,expires_at,enabled,max_concurrent,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)`)
+      .run(keyId, hash(keyId + ':' + row.key_hash), row.prefix, row.name, row.max_images, row.used_images, row.expires_at, row.enabled, row.max_concurrent, row.created_at);
     db.prepare('UPDATE distribution_keys SET reserved_images=reserved_images+?, last_used_at=? WHERE id=?').run(n, now, keyId);
     db.prepare("INSERT INTO distribution_requests (id,key_id,requested,status,created_at) VALUES (?,?,?,'pending',?)").run(id, keyId, n, now);
     return null;
@@ -213,5 +237,9 @@ module.exports = function installDistribution(app, db, { authAdmin, proxyRequest
       fail(res, 502, '上游结果不确定，额度暂时预占；请联系管理员并提供请求 ID，勿自动重试');
     }
   });
-  return { ready };
+  return { ready, check, resolve, view, siteRow, settle,
+    reserve: (keyId,n,id) => durable(() => reserve(keyId,n,id)),
+    uncertain: id => durable(() => db.prepare("UPDATE distribution_requests SET status='uncertain',error='请核对上游结果' WHERE id=? AND status='pending'").run(id)),
+    resetSiteUsage: (id,n) => durable(() => db.prepare('UPDATE distribution_keys SET used_images=? WHERE id=?').run(n,'site:'+id)) };
+
 };

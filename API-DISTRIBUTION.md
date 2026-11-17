@@ -1,10 +1,10 @@
 # API 分发
 
-后台入口：`/imgadmin` → **API 分发**。与原站内 Key 独立，不互通。
+后台入口：`/imgadmin` → **API 分发**。工作台 Key（`sk-gi-`）和分发 Key（`sk-dist-`）均可用于工作台或外部 API。同一把 Key 共用总张数、有效期和已用张数；不同 Key 各自计量。站内 Key 保留历史用量，仍在原管理页修改。
 
 创建时设置客户名称、总张数、到期时间和最大并发。总张数 `-1` 为不限，`0` 为不可出图；有效期留空为永久。增加总张数即可充值，编辑有效期即可续期。停用阻止后续请求，已经接收的请求仍会完成结算。
 
-完整密钥只在创建成功时显示一次；数据库仅保存 SHA-256 摘要和前缀。丢失后停用旧密钥、创建新密钥。上游密钥不会交给客户。
+新分发密钥的完整值只在创建成功时显示一次；数据库仅保存 SHA-256 摘要和前缀。丢失后停用旧密钥、创建新密钥。上游密钥不会交给客户。
 
 ## 接入
 
@@ -35,13 +35,13 @@ SQLite 事务先预占请求张数，并同时检查总额度与并发数。成�
 
 ## 部署与备份
 
-更新 server.js、api-distribution.js、distribution-backup.js、public/admin.html、public/admin-distribution.js 后重启 Node 服务。首次加载自动在现有 data/keys.db 中创建独立的 distribution_keys / distribution_requests 表，不重写原站内 Key。无需新增依赖。
+更新 server.js、api-distribution.js、distribution-backup.js、public/index.html、public/admin.html、public/admin-distribution.js 后重启 Node 服务。首次加载自动在现有 data/keys.db 中创建独立的 distribution_keys / distribution_requests 表，不重写原站内 Key。无需新增依赖。
 
 Render 免费实例使用 GitHub 加密持久化，无需付费磁盘。需要 GITHUB_TOKEN、GITHUB_REPO、GITHUB_BRANCH 和 DISTRIBUTION_BACKUP_SECRET 环境变量。备份保存至 data/distribution-backup.json，使用 AES-256-GCM 加密，解密密钥只保存在 Render 环境变量中，请妥善保留，切勿随意更换。
 
 每次创建、编辑、预占和结算均串行写入 GitHub，成功后才确认操作或发送上游生图请求。启动时从 GitHub 恢复全部分发密钥与额度。备份读取、写入或冲突校验失败会暂停分发接口，修复配置或网络后重启恢复。备份提交使用 [skip render] 避免触发自动部署。此方式适合低频分发，GitHub API 延迟和限流会影响操作速度；高并发业务应迁移到持久数据库。
 
-原有 keys-backup.json 仅包含站内 Key，不包含分发额度。未配置 GITHUB_TOKEN 的本地部署使用 SQLite，必须自行持久化 data 目录。使用 SQLite 在线备份 API，或停服后备份完整 data 目录；运行中不要只复制 keys.db 而遗漏 WAL。
+首次启动将旧工作台 Key 清单迁移至加密的 data/workbench-backup.enc.json，以后只写加密备份。旧文件及其 Git 历史仍可能含有效凭据；公开过的 Key 应在后台停用并换发。共享额度记录在 data/distribution-backup.json。未配置 GITHUB_TOKEN 的本地部署使用 SQLite，必须自行持久化 data 目录。使用 SQLite 在线备份 API，或停服后备份完整 data 目录；运行中不要只复制 keys.db 而遗漏 WAL。
 
 当前按单实例设计，请使用单 Node 实例。重新部署前尽量避开进行中请求；重启时未完成的预占会标记为待核对。GitHub 文件版本冲突会停止写入，避免两个实例覆盖额度。
 

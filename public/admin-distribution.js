@@ -36,7 +36,7 @@
   };
   async function load() {
     section.innerHTML = `<div class="card card-body" style="margin-bottom:16px">
-      <h2>API 分发</h2><p style="margin:8px 0 16px;color:var(--text-muted)">为外部客户创建独立密钥，按实际成功出图张数计费。请求进行中预占额度。</p>
+      <h2>API 分发</h2><p style="margin:8px 0 16px;color:var(--text-muted)">工作台和外部 API 可使用同一把密钥，共享剩余张数。请求进行中预占额度，成功后按实际张数扣除。</p>
       <div class="toolbar"><button class="btn-primary" id="distCreate">创建分发密钥</button><button class="top-btn" id="distRefresh">刷新</button><button class="top-btn" id="distDocs">接入说明</button>
       <input class="search-input" id="distSearch" placeholder="搜索客户名称或密钥前缀" aria-label="搜索分发密钥"></div>
       <p id="distNotice" role="status" style="color:var(--status-err)"></p></div>
@@ -58,7 +58,7 @@
         <td><span class="badge ${status === '可用' ? 'active' : 'disabled'}">${status}</span></td>
         <td>${row.usedImages} / ${row.maxImages === -1 ? '不限' : row.maxImages}<br><small>预占 ${row.reservedImages} · 剩余 ${row.remaining === -1 ? '不限' : row.remaining}</small></td>
         <td>${escape(date(row.expiresAt))}</td><td>${row.maxConcurrent}</td>
-        <td><button class="btn-sm" data-action="edit" data-id="${row.id}">编辑</button> <button class="btn-sm" data-action="toggle" data-id="${row.id}">${row.enabled ? '停用' : '启用'}</button> <button class="btn-sm" data-action="logs" data-id="${row.id}">记录</button></td></tr>`;
+        <td>${row.id.startsWith('site:') ? '请在工作台密钥管理中编辑' : `<button class="btn-sm" data-action="edit" data-id="${row.id}">编辑</button> <button class="btn-sm" data-action="toggle" data-id="${row.id}">${row.enabled ? '停用' : '启用'}</button>`} <button class="btn-sm" data-action="logs" data-id="${row.id}">记录</button></td></tr>`;
     }).join('') || '<tr><td colspan="6" style="text-align:center;padding:32px">暂无分发密钥</td></tr>';
     section.querySelectorAll('[data-action]').forEach(button => {
       button.onclick = async () => {

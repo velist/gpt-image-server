@@ -2,8 +2,7 @@ const crypto = require('crypto');
 const zlib = require('zlib');
 
 // The repository may be public. Encrypt customer names, quotas and request history.
-module.exports = function githubDistributionBackup({ token, repo, branch, secret, fetchImpl = fetch }) {
-  const file = 'data/distribution-backup.json';
+module.exports = function githubDistributionBackup({ token, repo, branch, secret, fetchImpl = fetch, file = 'data/distribution-backup.json' }) {
   const url = `https://api.github.com/repos/${repo}/contents/${file}`;
   let sha;
   const key = secret && crypto.createHash('sha256').update(secret).digest();

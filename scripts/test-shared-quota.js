@@ -1,0 +1,18 @@
+const test=require('node:test'), assert=require('node:assert/strict'), fs=require('node:fs'), os=require('node:os'), path=require('node:path'), http=require('node:http'), {spawn}=require('node:child_process'), crypto=require('node:crypto');
+test('one image balance on both HTTP entry points, for old and new keys', {timeout:20000}, async t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'image-shared-')); const legacy='sk-gi-'+crypto.randomBytes(24).toString('hex');
+ fs.writeFileSync(path.join(dir,'keys-backup.json'),JSON.stringify([{id:'old-test',key:legacy,name:'old',usedImages:1,maxImages:4}]));
+ let release,entered,calls=0; const upstream=http.createServer(async(req,res)=>{let body='';for await(const part of req)body+=part;calls++; if(entered){entered();entered=null; await new Promise(r=>release=r)} const n=req.url.endsWith('/edits')?1:JSON.parse(body).n||1;res.end(JSON.stringify({data:Array.from({length:n},()=>({b64_json:'YQ=='}))}));});
+ const listen=s=>new Promise(r=>s.listen(0,'127.0.0.1',r));await listen(upstream);const socket=http.createServer();await listen(socket);const port=socket.address().port;await new Promise(r=>socket.close(r));
+ const child=spawn(process.execPath,[path.join(__dirname,'../server.js')],{env:{...process.env,IMAGE_DATA_DIR:dir,PORT:String(port),UPSTREAM_API_BASE:'http://127.0.0.1:'+upstream.address().port,ADMIN_PASSWORD:'test',GITHUB_TOKEN:''},stdio:'pipe'});let out='';child.stderr.on('data',b=>out+=b);t.after(async()=>{release?.();if(child.exitCode===null){const done=new Promise(r=>child.once('exit',r));child.kill();await done}upstream.closeAllConnections();upstream.close();fs.rmSync(dir,{recursive:true,force:true})});
+ await new Promise((r,j)=>{child.stdout.on('data',b=>{if(b.toString().includes('Server running'))r()});child.once('exit',()=>j(Error(out)))});
+ async function call(p,key,body){const res=await fetch('http://127.0.0.1:'+port+p,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+key,'X-API-Key':key,...(body instanceof FormData?{}:{'Content-Type':'application/json'})},body:body instanceof FormData?body:JSON.stringify(body)});return [res.status,await res.json()]}
+ const [,login]=await call('/api/admin/login','',{password:'test'});const [created,newKey]=await call('/api/admin/distribution',login.token,{name:'new',maxImages:3});assert.equal(created,201);
+ for(const [key,start] of [[legacy,1],[newKey.key,0]]){
+   const usage=async()=>{const [a,x]=await call('/api/key-info',key);const [b,y]=await call('/v1/usage',key);assert.equal(a,200);assert.equal(b,200);assert.deepEqual(x,y);return x};assert.equal((await usage()).usedImages,start);
+   const reached=new Promise(r=>entered=r);const [s,{taskId}]=await call('/api/generate',key,{prompt:'test',n:2});assert.equal(s,202);await reached;assert.equal((await usage()).remaining,1);const before=calls;assert.equal((await call('/v1/images/generations',key,{prompt:'test',n:2}))[0],429);assert.equal(calls,before);release();
+   for(let i=0;i<100;i++){if((await call('/api/tasks/'+taskId,key))[1].status==='done')break;await new Promise(r=>setTimeout(r,10))}assert.equal((await usage()).usedImages,start+2);
+   if(start){assert.equal((await call('/v1/images/generations',key,{prompt:'test'}))[0],200)}else{const form=new FormData();form.set('image',new Blob(['test'],{type:'image/png'}),'img.png');form.set('prompt','edit');const [e,task]=await call('/api/edit',key,form);assert.equal(e,202);for(let i=0;i<100;i++){if((await call('/api/tasks/'+task.taskId,key))[1].status==='done')break;await new Promise(r=>setTimeout(r,10))}}
+   assert.equal((await usage()).usedImages,start+3);assert.equal((await usage()).remaining,0);assert.equal((await call('/api/generate',key,{prompt:'test'}))[0],429);
+ }
+});
